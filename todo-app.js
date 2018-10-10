@@ -68,14 +68,32 @@ const Greeting = function (props) {
   );
 }
 
-TinyReact.render(<Greeting message="Good day!" />, root);
+//TinyReact.render(<Greeting message="Good day!" />, root);
 
-setTimeout(() => {
-  alert("Re-rendering...");
-  TinyReact.render(<Greeting message="Good Night!" />, root);
-}, 4000);
+// setTimeout(() => {
+//   alert("Re-rendering...");
+//   TinyReact.render(<Greeting message="Good Night!" />, root);
+// }, 4000);
 
+// Stateful component
+class Alert extends TinyReact.Component {
+  constructor() {
+    super();
+    this.state = {};
+  }
 
+  render() {
+    return (
+      <div className="alert-container">
+        <h2>ALERT TITLE</h2>
+        <div>
+          Alert body
+        </div>
+      </div>
+    );
+  }
+}
 
+TinyReact.render(<Alert />, root);
 
 
