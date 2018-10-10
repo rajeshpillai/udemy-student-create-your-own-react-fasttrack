@@ -52,5 +52,27 @@ const Heart = (props) => <span style={props.style}>&hearts;</span>;
 // }
 
 
-TinyReact.render(<Heart style="color:red" />, root);
+//TinyReact.render(<Heart style="color:red" />, root);
+
+const Button = (props) => <button onClick={props.onClick}>{props.children}</button>;
+
+
+// Testing functional components, props, nested components
+
+const Greeting = function (props) {
+  return (
+    <div className="greeting">
+      <h2>Welcome {props.message}</h2>
+      <Button onClick={() => alert("I love React")}>I <Heart /> React</Button>
+    </div>
+  );
+}
+
+TinyReact.render(<Greeting message="Good day!" />, root);
+
+
+
+
+
+
 
