@@ -79,16 +79,25 @@ const Greeting = function (props) {
 class Alert extends TinyReact.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      title: "Default title"
+    };
+
+    this.changeTitle = this.changeTitle.bind(this); // Binding the context to instance of Alert
+  }
+
+  changeTitle() {
+    this.setState({ title: new Date().toString() });
   }
 
   render() {
     return (
       <div className="alert-container">
-        <h2>ALERT TITLE</h2>
+        <h2>{this.state.title}</h2>
         <div>
           {this.props.message}
         </div>
+        <Button onClick={this.changeTitle}>Change title</Button>
       </div>
     );
   }
