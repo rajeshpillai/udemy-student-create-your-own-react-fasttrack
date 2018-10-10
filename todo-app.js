@@ -42,7 +42,8 @@ var Step2 = (
 //   TinyReact.render(Step2, root);
 // }, 4000);
 
-const Heart = () => <span>&hearts;</span>;
+// Functional Component
+const Heart = (props) => <span style={props.style}>&hearts;</span>;
 
 // function Heart() {
 //   return (
@@ -50,7 +51,6 @@ const Heart = () => <span>&hearts;</span>;
 //   );
 // }
 
-console.log(Heart);
 
-TinyReact.render(<Heart />, root);
+TinyReact.render(<Heart style="color:red" />, root);
 
