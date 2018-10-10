@@ -77,8 +77,8 @@ const Greeting = function (props) {
 
 // Stateful component
 class Alert extends TinyReact.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {};
   }
 
@@ -87,13 +87,13 @@ class Alert extends TinyReact.Component {
       <div className="alert-container">
         <h2>ALERT TITLE</h2>
         <div>
-          Alert body
+          {this.props.message}
         </div>
       </div>
     );
   }
 }
 
-TinyReact.render(<Alert />, root);
+TinyReact.render(<Alert message="Are you sure?" />, root);
 
 
