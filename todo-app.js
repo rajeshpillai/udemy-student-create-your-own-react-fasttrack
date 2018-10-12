@@ -122,9 +122,50 @@ class Stateful extends TinyReact.Component {
   }
 }
 
-TinyReact.render(<Stateful title="Task 1" />, root);
+//TinyReact.render(<Stateful title="Task 1" />, root);
 
 
 function update() {
   TinyReact.render(<Stateful title={new Date()} />, root);
 }
+
+
+class WishList extends TinyReact.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      wish: {
+        title: "I wan't to be a programmer"
+      }
+    }
+    this.update = this.update.bind(this);
+  }
+
+  update() {
+    let newValue = this.inputWish.value;  // here inputWish is the input DOM element
+    let wish = Object.assign({}, this.state.wish);
+    // this.state.width = newValue;  // BAD PRACTICE as we are mutating the state
+
+    wish.title = newValue;
+    this.setState({
+      wish
+    });
+  }
+
+  render() {
+    return (
+      <div>
+        <h2>Your wish list</h2>
+        <input type="text" ref={(inputWish) => { this.inputWish = inputWish }} placeholder="What's your wish?"></input>
+        <button onClick={this.update}>Update</button>
+
+        <div>
+          {this.state.wish.title}
+        </div>
+      </div>
+    );
+  }
+
+}
+
+TinyReact.render(<WishList />, root);
