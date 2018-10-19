@@ -263,8 +263,15 @@ class TodoItem extends TinyReact.Component {
     if (this.props.task.completed) {
       className += "strike";
     }
+
+    let todoItemStyle = {
+      borderBottom: "1px dashed gray",
+      color: "red"
+    };
+
     return (
       <li
+        style={todoItemStyle}
         key={this.props.key}
         className={className}
         onDblClick={() => this.props.onToggleComplete(this.props.task)}
