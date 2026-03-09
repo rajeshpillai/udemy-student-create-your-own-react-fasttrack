@@ -186,8 +186,10 @@ Ideas for extending TinyReact:
 
 ---
 
-[Previous: Module 14 — Context API](./14-context-api.md)
+[Previous: Module 14 — Context API](./14-context-api.md) | [Next: Module 16 — Signals →](./16-signals.md)
 
 ---
 
 **Congratulations!** You've built React from scratch and understand every piece of how it works. No more black boxes.
+
+**But wait — there's one more module.** In Module 16, we add **Signals** — a completely different paradigm for reactive state. Same todo app, zero hooks, zero dependency arrays. See how the same problem can be solved two different ways.

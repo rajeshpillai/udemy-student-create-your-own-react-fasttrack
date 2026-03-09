@@ -1,190 +1,68 @@
 import TinyReact from "./tiny-react";
 
-// Module 15: Capstone — Todo App using all TinyReact features
-
 const root = document.getElementById("root");
 
-// ── Theme Context ──────────────────────────────────────────────────
+function LandingPage() {
+  const cardStyle = {
+    display: "block",
+    border: "1px solid #ddd",
+    borderRadius: "12px",
+    padding: "24px",
+    marginBottom: "16px",
+    backgroundColor: "#fff",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    textDecoration: "none",
+    color: "inherit",
+  };
 
-const ThemeContext = TinyReact.createContext("light");
-
-// ── TodoItem Component ─────────────────────────────────────────────
-
-function TodoItem({ task, onDelete, onToggleComplete, onToggleEdit, onUpdateTask }) {
-  const theme = TinyReact.useContext(ThemeContext);
-  const inputRef = TinyReact.useRef(null);
-
-  const itemStyle = TinyReact.useMemo(
-    () => ({
-      padding: "10px",
-      borderBottom: "1px solid #ddd",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: theme === "dark" ? "#2a2a2a" : "#fff",
-      color: theme === "dark" ? "#eee" : "#333",
-      textDecoration: task.completed ? "line-through" : "none",
-      opacity: task.completed ? "0.6" : "1",
-    }),
-    [theme, task.completed]
-  );
-
-  const handleSave = TinyReact.useCallback(() => {
-    if (inputRef.current) {
-      onUpdateTask(task.id, inputRef.current.value);
-    }
-  }, [task.id, onUpdateTask]);
+  const tagStyle = {
+    display: "inline-block",
+    padding: "2px 8px",
+    borderRadius: "4px",
+    fontSize: "11px",
+    fontWeight: "bold",
+    marginRight: "6px",
+  };
 
   return (
-    <li key={task.id} style={itemStyle}>
-      <div style={{ flex: "1" }}>
-        {task.edit ? (
-          <span>
-            <input
-              type="text"
-              value={task.title}
-              ref={(el) => { inputRef.current = el; }}
-              style={{ padding: "4px", fontSize: "14px" }}
-            />
-            <button onClick={handleSave} style={{ marginLeft: "4px" }}>Save</button>
-          </span>
-        ) : (
-          <span
-            onDblClick={() => onToggleComplete(task)}
-            style={{ cursor: "pointer" }}
-          >
-            {task.title}
-          </span>
-        )}
-      </div>
-      <div>
-        <button onClick={() => onToggleEdit(task)} style={{ marginRight: "4px" }}>
-          {task.edit ? "Cancel" : "Edit"}
-        </button>
-        <button onClick={() => onDelete(task)} style={{ color: "red" }}>
-          Delete
-        </button>
-      </div>
-    </li>
-  );
-}
-
-// ── TodoApp Component ──────────────────────────────────────────────
-
-function TodoApp() {
-  const [tasks, setTasks] = TinyReact.useState([
-    { id: 1, title: "Build createElement", completed: true, edit: false },
-    { id: 2, title: "Build diffing algorithm", completed: true, edit: false },
-    { id: 3, title: "Build hooks", completed: true, edit: false },
-    { id: 4, title: "Build todo app", completed: false, edit: false },
-  ]);
-  const [theme, setTheme] = TinyReact.useState("light");
-  const newTodoRef = TinyReact.useRef(null);
-
-  TinyReact.useEffect(() => {
-    console.log(`Todo count: ${tasks.length}, theme: ${theme}`);
-  }, [tasks.length, theme]);
-
-  const addTodo = TinyReact.useCallback(() => {
-    const input = newTodoRef.current;
-    if (!input || input.value.trim() === "") return;
-
-    setTasks((prev) => [
-      ...prev,
-      { id: Date.now(), title: input.value.trim(), completed: false, edit: false },
-    ]);
-    input.value = "";
-    input.focus();
-  }, []);
-
-  const deleteTodo = TinyReact.useCallback((task) => {
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
-  }, []);
-
-  const toggleComplete = TinyReact.useCallback((task) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id ? { ...t, completed: !t.completed } : t
-      )
-    );
-  }, []);
-
-  const toggleEdit = TinyReact.useCallback((task) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id ? { ...t, edit: !t.edit } : t
-      )
-    );
-  }, []);
-
-  const updateTask = TinyReact.useCallback((taskId, newTitle) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, title: newTitle, edit: false } : t
-      )
-    );
-  }, []);
-
-  const remaining = TinyReact.useMemo(
-    () => tasks.filter((t) => !t.completed).length,
-    [tasks]
-  );
-
-  const containerStyle = TinyReact.useMemo(
-    () => ({
-      maxWidth: "500px",
-      margin: "20px auto",
-      padding: "20px",
-      fontFamily: "system-ui, sans-serif",
-      backgroundColor: theme === "dark" ? "#1a1a1a" : "#fafafa",
-      color: theme === "dark" ? "#eee" : "#333",
-      borderRadius: "8px",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-    }),
-    [theme]
-  );
-
-  return (
-    <ThemeContext.Provider value={theme}>
-      <div style={containerStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1>Todo App</h1>
-          <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
-            {theme === "light" ? "Dark" : "Light"} Mode
-          </button>
-        </div>
-        <p style={{ color: "gray", fontSize: "12px" }}>
-          Built with TinyReact | {remaining} item{remaining !== 1 ? "s" : ""} remaining | Double-click to toggle complete
+    <div style={{ maxWidth: "600px", margin: "40px auto", fontFamily: "system-ui, sans-serif", padding: "0 20px" }}>
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <h1 style={{ fontSize: "36px", marginBottom: "8px" }}>TinyReact</h1>
+        <p style={{ color: "#666", fontSize: "16px", margin: "0" }}>
+          A ~650-line React clone built from scratch. Two todo apps, two paradigms.
         </p>
-
-        <div style={{ display: "flex", marginBottom: "16px" }}>
-          <input
-            type="text"
-            ref={(el) => { newTodoRef.current = el; }}
-            placeholder="What needs to be done?"
-            onKeyDown={(e) => { if (e.key === "Enter") addTodo(); }}
-            style={{ flex: "1", padding: "8px", fontSize: "14px", marginRight: "8px" }}
-          />
-          <button onClick={addTodo} style={{ padding: "8px 16px" }}>
-            Add
-          </button>
-        </div>
-
-        <ul style={{ listStyle: "none", padding: "0", margin: "0" }}>
-          {tasks.map((task) => (
-            <TodoItem
-              key={task.id}
-              task={task}
-              onDelete={deleteTodo}
-              onToggleComplete={toggleComplete}
-              onToggleEdit={toggleEdit}
-              onUpdateTask={updateTask}
-            />
-          ))}
-        </ul>
       </div>
-    </ThemeContext.Provider>
+
+      <a href="/todo-hooks.html" style={cardStyle}>
+        <h2 style={{ margin: "0 0 8px 0" }}>Todo App — Hooks</h2>
+        <p style={{ color: "#666", margin: "0 0 12px 0", fontSize: "14px" }}>
+          Built with useState, useEffect, useRef, useMemo, useCallback, and Context API.
+          The classic React pattern — components re-render when state changes.
+        </p>
+        <span style={{ ...tagStyle, backgroundColor: "#e3f2fd", color: "#1565c0" }}>useState</span>
+        <span style={{ ...tagStyle, backgroundColor: "#e8f5e9", color: "#2e7d32" }}>useEffect</span>
+        <span style={{ ...tagStyle, backgroundColor: "#fff3e0", color: "#e65100" }}>useContext</span>
+        <span style={{ ...tagStyle, backgroundColor: "#f3e5f5", color: "#7b1fa2" }}>useRef</span>
+      </a>
+
+      <a href="/todo-signals.html" style={cardStyle}>
+        <h2 style={{ margin: "0 0 8px 0" }}>Todo App — Signals</h2>
+        <p style={{ color: "#666", margin: "0 0 12px 0", fontSize: "14px" }}>
+          Built with createSignal, createEffect, and createMemo.
+          No hooks, no dependency arrays — reactive state auto-tracks its consumers.
+        </p>
+        <span style={{ ...tagStyle, backgroundColor: "#fce4ec", color: "#c62828" }}>createSignal</span>
+        <span style={{ ...tagStyle, backgroundColor: "#e0f7fa", color: "#00695c" }}>createEffect</span>
+        <span style={{ ...tagStyle, backgroundColor: "#fff9c4", color: "#f57f17" }}>createMemo</span>
+      </a>
+
+      <div style={{ textAlign: "center", marginTop: "32px", color: "#999", fontSize: "13px" }}>
+        <p>
+          16 tutorial modules | <a href="https://github.com/rajeshpillai/udemy-student-create-your-own-react-fasttrack" style={{ color: "#666" }}>Source on GitHub</a>
+        </p>
+      </div>
+    </div>
   );
 }
 
-TinyReact.render(<TodoApp />, root);
+TinyReact.render(<LandingPage />, root);

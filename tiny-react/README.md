@@ -1,6 +1,6 @@
 # TinyReact — Build Your Own React From Scratch
 
-A ~600-line React clone built step-by-step across 16 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, and more.
+A ~650-line React clone built step-by-step across 17 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, and more.
 
 ## Quick Start
 
@@ -10,7 +10,10 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser. The app (currently the capstone Todo app) will be running.
+Open `http://localhost:5173` in your browser. The landing page shows links to both demo apps:
+
+- **Todo App (Hooks)** — built with useState, useEffect, useRef, useMemo, useCallback, Context
+- **Todo App (Signals)** — built with createSignal, createEffect, createMemo — no hooks, no dependency arrays
 
 ## How to Follow the Tutorial
 
@@ -67,36 +70,31 @@ After editing, just check your browser — Vite hot-reloads automatically.
 | **12** useState | Functional `Counter` with +/- buttons. `NameCard` with two independent states |
 | **13** useEffect + useRef + useMemo | Pausable timer with formatted time. Console logs effect start/cleanup |
 | **14** Context | Toggle theme button — nested `ThemedButton` changes style without props |
-| **15** Capstone Todo | Full CRUD todo app: add, edit, delete, complete, theme toggle |
+| **15** Capstone Todo (Hooks) | Full CRUD todo app: add, edit, delete, complete, theme toggle |
+| **16** Signals + Todo (Signals) | Same todo app rebuilt with signals — no hooks, no dependency arrays |
 
 ## Project Structure
 
 ```
 tiny-react/
-├── index.html              # HTML shell with <div id="root">
+├── index.html              # Landing page
+├── todo-hooks.html         # Hooks todo app entry
+├── todo-signals.html       # Signals todo app entry
 ├── package.json            # Vite dev dependency
-├── vite.config.js          # JSX → TinyReact.createElement
+├── vite.config.js          # JSX factory + multi-page config
 ├── src/
-│   ├── tiny-react.js       # The framework (~600 lines)
-│   └── app.jsx             # Demo application
+│   ├── tiny-react.js       # The framework (~650 lines)
+│   ├── app.jsx             # Landing page
+│   ├── todo-hooks/
+│   │   └── app.jsx         # Todo app using hooks
+│   └── todo-signals/
+│       └── app.jsx         # Todo app using signals
 └── tutorial/
     ├── README.md           # Tutorial index
     ├── 00-project-setup.md
-    ├── 01-the-jsx-illusion.md
-    ├── 02-cleaning-up-children.md
-    ├── 03-mounting-to-the-real-dom.md
-    ├── 04-attributes-events-properties.md
-    ├── 05-style-props.md
-    ├── 06-diffing-same-type-elements.md
-    ├── 07-handling-type-mismatches.md
-    ├── 08-removing-stale-nodes.md
-    ├── 09-keyed-reconciliation.md
-    ├── 10-functional-components.md
-    ├── 11-lifecycle-methods-and-refs.md
-    ├── 12-usestate-hook.md
-    ├── 13-useeffect-hook.md
-    ├── 14-context-api.md
-    └── 15-capstone-todo-app.md
+    ├── ...
+    ├── 15-capstone-todo-app.md
+    └── 16-signals.md
 ```
 
 ## What TinyReact Implements
@@ -109,6 +107,7 @@ tiny-react/
 | Class Components | `Component`, `setState`, lifecycle methods |
 | Hooks | `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback` |
 | Context | `createContext`, `useContext` |
+| Signals | `createSignal`, `createEffect`, `createMemo` |
 | DOM | Attributes, events, `className`, `style` objects, `value`/`checked`, refs |
 
 ## Prerequisites

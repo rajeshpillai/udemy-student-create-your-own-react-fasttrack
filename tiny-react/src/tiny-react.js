@@ -614,6 +614,49 @@ class Component {
   componentDidUpdate(prevProps, prevState) {}
 }
 
+// ── Signals ─────────────────────────────────────────────────────────
+
+let currentTracker = null;
+
+function createSignal(initialValue) {
+  let value = initialValue;
+  const subscribers = new Set();
+
+  function read() {
+    if (currentTracker) {
+      subscribers.add(currentTracker);
+    }
+    return value;
+  }
+
+  function write(newValue) {
+    const next = typeof newValue === "function" ? newValue(value) : newValue;
+    if (next !== value) {
+      value = next;
+      // Copy to avoid issues if a subscriber modifies the set during iteration
+      [...subscribers].forEach((fn) => fn());
+    }
+  }
+
+  return [read, write];
+}
+
+function createEffect(fn) {
+  const execute = () => {
+    const prev = currentTracker;
+    currentTracker = execute;
+    fn();
+    currentTracker = prev;
+  };
+  execute();
+}
+
+function createMemo(fn) {
+  const [read, write] = createSignal(undefined);
+  createEffect(() => write(fn()));
+  return read;
+}
+
 // ── Public API ──────────────────────────────────────────────────────
 
 const TinyReact = {
@@ -627,6 +670,9 @@ const TinyReact = {
   useCallback,
   createContext,
   useContext,
+  createSignal,
+  createEffect,
+  createMemo,
 };
 
 export default TinyReact;
