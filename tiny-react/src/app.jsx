@@ -1,40 +1,46 @@
 import TinyReact from "./tiny-react";
 
-// Module 8: Proper unmounting with event listener cleanup
+// Module 9: Keyed reconciliation — items reorder instead of being recreated
 
 const root = document.getElementById("root");
 
-let clickCount = 0;
+const items1 = [
+  { id: 1, text: "Apple" },
+  { id: 2, text: "Banana" },
+  { id: 3, text: "Cherry" },
+  { id: 4, text: "Date" },
+];
 
-const render1 = (
-  <div>
-    <h1>Unmounting Demo</h1>
-    <p>Three buttons below — two will be removed on re-render.</p>
-    <button onClick={() => { clickCount++; console.log("Click #" + clickCount); }}>
-      Button 1 (stays)
-    </button>
-    <button onClick={() => console.log("I will be removed!")}>
-      Button 2 (removed)
-    </button>
-    <button onClick={() => console.log("I will also be removed!")}>
-      Button 3 (removed)
-    </button>
-  </div>
-);
+const items2 = [
+  { id: 3, text: "Cherry" },
+  { id: 1, text: "Apple" },
+  { id: 4, text: "Date" },
+  // id: 2 (Banana) is removed
+];
 
-const render2 = (
-  <div>
-    <h1>Unmounting Demo</h1>
-    <p>Two buttons removed. Event listeners cleaned up — no memory leaks!</p>
-    <button onClick={() => { clickCount++; console.log("Click #" + clickCount); }}>
-      Button 1 (stayed)
-    </button>
-  </div>
-);
+function renderList(items) {
+  return (
+    <div>
+      <h1>Keyed List Demo</h1>
+      <p>Items will reorder and one will be removed in 5 seconds.</p>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id} style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>
+            {item.id}: {item.text}
+            <input type="text" placeholder={"Type in " + item.text} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
-TinyReact.render(render1, root);
+TinyReact.render(renderList(items1), root);
 
 setTimeout(() => {
-  alert("About to remove two buttons with proper cleanup.");
-  TinyReact.render(render2, root);
-}, 3000);
+  alert(
+    "Re-rendering with reordered list. Type something in the inputs first!\n" +
+    "With keys: inputs follow their items.\nWithout keys: inputs would stay in position."
+  );
+  TinyReact.render(renderList(items2), root);
+}, 5000);

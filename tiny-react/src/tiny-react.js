@@ -1,4 +1,4 @@
-// TinyReact — Module 8: Removing Stale Nodes
+// TinyReact — Module 9: Keyed Reconciliation
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -48,16 +48,71 @@ function diff(vdom, container, oldDom) {
     // Update the back-reference to point to the new VDOM
     oldDom._virtualElement = vdom;
 
-    // Recursively diff children by index
-    vdom.children.forEach((child, i) => {
-      diff(child, oldDom, oldDom.childNodes[i]);
-    });
+    // Collect keyed old children into a map for O(1) lookup
+    const keyedElements = {};
+    for (let i = 0; i < oldDom.childNodes.length; i++) {
+      const domElement = oldDom.childNodes[i];
+      const key =
+        domElement._virtualElement && domElement._virtualElement.props.key;
+      if (key) {
+        keyedElements[key] = { domElement, index: i };
+      }
+    }
 
-    // Remove extra old children (with proper cleanup)
+    const hasKeys = Object.keys(keyedElements).length > 0;
+
+    if (!hasKeys) {
+      // No keys — diff children by index (as before)
+      vdom.children.forEach((child, i) => {
+        diff(child, oldDom, oldDom.childNodes[i]);
+      });
+    } else {
+      // Keyed reconciliation
+      vdom.children.forEach((virtualElement, i) => {
+        const key = virtualElement.props.key;
+        if (key) {
+          const keyedDomElement = keyedElements[key];
+          if (keyedDomElement) {
+            // Reposition if needed
+            if (
+              oldDom.childNodes[i] &&
+              !oldDom.childNodes[i].isSameNode(keyedDomElement.domElement)
+            ) {
+              oldDom.insertBefore(
+                keyedDomElement.domElement,
+                oldDom.childNodes[i]
+              );
+            }
+            diff(virtualElement, oldDom, keyedDomElement.domElement);
+          } else {
+            // New keyed element — mount it
+            mountElement(virtualElement, oldDom);
+          }
+        }
+      });
+    }
+
+    // Remove extra old children
     const oldNodes = oldDom.childNodes;
-    if (oldNodes.length > vdom.children.length) {
-      for (let i = oldNodes.length - 1; i >= vdom.children.length; i--) {
-        unmountNode(oldNodes[i]);
+    if (hasKeys) {
+      // Keyed: remove elements whose keys are no longer present
+      const newKeys = new Set(
+        vdom.children.map((c) => c.props.key).filter((k) => k != null)
+      );
+      for (let i = oldNodes.length - 1; i >= 0; i--) {
+        const oldChild = oldNodes[i];
+        const oldKey =
+          oldChild._virtualElement && oldChild._virtualElement.props.key;
+        if (oldKey != null && !newKeys.has(oldKey)) {
+          unmountNode(oldChild);
+        }
+      }
+    } else {
+      // Index-based: remove tail
+      if (oldNodes.length > vdom.children.length) {
+        for (let i = oldNodes.length - 1; i >= vdom.children.length; i--) {
+          unmountNode(oldNodes[i]);
+        }
       }
     }
   }
