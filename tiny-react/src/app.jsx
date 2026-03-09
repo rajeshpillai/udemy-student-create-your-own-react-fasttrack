@@ -58,7 +58,7 @@ function LandingPage() {
 
       <div style={{ textAlign: "center", marginTop: "32px", color: "#999", fontSize: "13px" }}>
         <p>
-          18 tutorial modules | <a href="https://github.com/rajeshpillai/udemy-student-create-your-own-react-fasttrack" style={{ color: "#666" }}>Source on GitHub</a>
+          23 tutorial modules | <a href="https://github.com/rajeshpillai/udemy-student-create-your-own-react-fasttrack" style={{ color: "#666" }}>Source on GitHub</a>
         </p>
       </div>
     </div>

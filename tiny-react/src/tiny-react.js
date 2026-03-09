@@ -1,4 +1,4 @@
-// TinyReact — Module 21: Concurrent Rendering
+// TinyReact — Module 22: DevTools
 
 // ── Fragment ─────────────────────────────────────────────────────────
 
@@ -846,6 +846,97 @@ function memo(component, areEqual) {
   MemoizedComponent._isMemo = true;
   MemoizedComponent._areEqual = areEqual || shallowEqual;
   return MemoizedComponent;
+}
+
+// ── DevTools ─────────────────────────────────────────────────────────
+// Exposes component tree for inspection via browser console:
+//   window.__TINY_REACT_DEVTOOLS__.getTree()
+//   window.__TINY_REACT_DEVTOOLS__.inspect(domElement)
+//   window.__TINY_REACT_DEVTOOLS__.highlight(domElement)
+
+if (typeof window !== "undefined") {
+  window.__TINY_REACT_DEVTOOLS__ = {
+    // Walk the DOM and build a component tree
+    getTree(rootElement) {
+      const root = rootElement || document.getElementById("root");
+      if (!root) return null;
+      return buildTree(root);
+    },
+
+    // Inspect a specific DOM element's component info
+    inspect(domElement) {
+      const info = {};
+      if (domElement._virtualElement) {
+        const vdom = domElement._virtualElement;
+        info.type = typeof vdom.type === "function" ? vdom.type.name || "Anonymous" : vdom.type;
+        info.props = vdom.props;
+        info.children = vdom.children.length;
+      }
+      if (domElement._hookOwner) {
+        const owner = domElement._hookOwner;
+        info.component = owner._vdom.type.name || "Anonymous";
+        info.hooks = getHooks(owner);
+        info.dom = owner._dom;
+      }
+      if (domElement._virtualElement && domElement._virtualElement.component) {
+        const comp = domElement._virtualElement.component;
+        info.classComponent = comp.constructor.name;
+        info.state = comp.state;
+        info.props = comp.props;
+      }
+      return info;
+    },
+
+    // Highlight a DOM element with a colored overlay
+    highlight(domElement) {
+      const prev = domElement.style.outline;
+      domElement.style.outline = "2px solid red";
+      setTimeout(() => { domElement.style.outline = prev; }, 2000);
+    },
+
+    // List all components in the tree
+    listComponents(rootElement) {
+      const root = rootElement || document.getElementById("root");
+      const components = [];
+      walkDom(root, (el) => {
+        if (el._hookOwner) {
+          const name = el._hookOwner._vdom.type.name || "Anonymous";
+          components.push({ name, element: el, hooks: getHooks(el._hookOwner) });
+        }
+        if (el._virtualElement && el._virtualElement.component) {
+          const comp = el._virtualElement.component;
+          components.push({ name: comp.constructor.name, element: el, state: comp.state });
+        }
+      });
+      return components;
+    },
+  };
+}
+
+function buildTree(domElement, depth = 0) {
+  const node = { element: domElement.tagName || "#text", children: [] };
+
+  if (domElement._hookOwner) {
+    node.component = domElement._hookOwner._vdom.type.name || "Anonymous";
+  }
+  if (domElement._virtualElement && domElement._virtualElement.component) {
+    node.classComponent = domElement._virtualElement.component.constructor.name;
+  }
+
+  for (let i = 0; i < domElement.childNodes.length; i++) {
+    if (domElement.childNodes[i].nodeType === 1) { // Element nodes only
+      node.children.push(buildTree(domElement.childNodes[i], depth + 1));
+    }
+  }
+  return node;
+}
+
+function walkDom(element, callback) {
+  if (!element) return;
+  callback(element);
+  for (let i = 0; i < element.childNodes.length; i++) {
+    walkDom(element.childNodes[i], callback);
+  }
 }
 
 // ── Public API ──────────────────────────────────────────────────────

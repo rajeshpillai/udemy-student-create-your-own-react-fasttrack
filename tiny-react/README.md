@@ -1,6 +1,6 @@
 # TinyReact — Build Your Own React From Scratch
 
-A ~870-line React clone built step-by-step across 22 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, performance, fragments, error boundaries, event delegation, concurrent rendering, and more.
+A ~960-line React clone built step-by-step across 23 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, performance, fragments, error boundaries, event delegation, concurrent rendering, and DevTools.
 
 ## Quick Start
 
@@ -77,6 +77,7 @@ After editing, just check your browser — Vite hot-reloads automatically.
 | **19** Error Boundaries | Wrap components — errors show fallback UI instead of crashing |
 | **20** Event Delegation | Check Event Listeners panel — no per-element listeners, only on document |
 | **21** Concurrent Rendering | Wrap heavy updates in `startTransition` — input stays responsive |
+| **22** DevTools | Open console → `__TINY_REACT_DEVTOOLS__.getTree()` to inspect component tree |
 
 ## Project Structure
 
