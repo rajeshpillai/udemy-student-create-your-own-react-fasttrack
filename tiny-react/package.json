@@ -1,0 +1,14 @@
+{
+  "name": "tiny-react",
+  "version": "0.0.1",
+  "description": "Build your own React from scratch",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}
