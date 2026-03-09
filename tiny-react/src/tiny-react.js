@@ -1,4 +1,4 @@
-// TinyReact — Module 4: Attributes, Events & Properties
+// TinyReact — Module 5: Style Props
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -76,6 +76,9 @@ function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {})
       } else if (propName === "className") {
         // JSX uses className, HTML uses class
         domElement.setAttribute("class", newProp);
+      } else if (propName === "style" && typeof newProp === "object") {
+        // Style object: { color: "red", fontSize: "14px" } → CSS string
+        domElement.style.cssText = styleObjToCss(newProp);
       } else if (propName !== "children") {
         // Standard attribute — skip "children" since that's our internal prop
         domElement.setAttribute(propName, newProp);
@@ -97,6 +100,23 @@ function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {})
       }
     }
   });
+}
+
+// ── Style Helpers ───────────────────────────────────────────────────
+
+function styleObjToCss(styleObj) {
+  let css = "";
+  for (const prop in styleObj) {
+    if (styleObj.hasOwnProperty(prop)) {
+      css += `${jsToCss(prop)}: ${styleObj[prop]}; `;
+    }
+  }
+  return css;
+}
+
+function jsToCss(s) {
+  // Convert camelCase to kebab-case: borderBottom → border-bottom
+  return s.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
 // ── Public API ──────────────────────────────────────────────────────
