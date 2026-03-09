@@ -1,4 +1,4 @@
-// TinyReact — Module 7: Handling Type Mismatches
+// TinyReact — Module 8: Removing Stale Nodes
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -53,11 +53,11 @@ function diff(vdom, container, oldDom) {
       diff(child, oldDom, oldDom.childNodes[i]);
     });
 
-    // Remove extra old children
+    // Remove extra old children (with proper cleanup)
     const oldNodes = oldDom.childNodes;
     if (oldNodes.length > vdom.children.length) {
       for (let i = oldNodes.length - 1; i >= vdom.children.length; i--) {
-        oldNodes[i].remove();
+        unmountNode(oldNodes[i]);
       }
     }
   }
@@ -65,12 +65,13 @@ function diff(vdom, container, oldDom) {
 
 // ── Mounting ────────────────────────────────────────────────────────
 
-function mountElement(vdom, container) {
-  return mountSimpleNode(vdom, container);
+function mountElement(vdom, container, oldDomElement) {
+  return mountSimpleNode(vdom, container, oldDomElement);
 }
 
-function mountSimpleNode(vdom, container) {
+function mountSimpleNode(vdom, container, oldDomElement) {
   let newDomElement;
+  const nextSibling = oldDomElement && oldDomElement.nextSibling;
 
   if (vdom.type === "text") {
     newDomElement = document.createTextNode(vdom.props.textContent);
@@ -81,12 +82,52 @@ function mountSimpleNode(vdom, container) {
 
   newDomElement._virtualElement = vdom;
 
+  // If replacing an old element, unmount it first
+  if (oldDomElement) {
+    unmountNode(oldDomElement);
+  }
+
+  // Insert at the correct position
+  if (nextSibling) {
+    container.insertBefore(newDomElement, nextSibling);
+  } else {
+    container.appendChild(newDomElement);
+  }
+
+  // Recursively mount children
   vdom.children.forEach((child) => {
     mountElement(child, newDomElement);
   });
 
-  container.appendChild(newDomElement);
   return newDomElement;
+}
+
+// ── Unmounting ──────────────────────────────────────────────────────
+
+function unmountNode(domElement) {
+  const virtualElement = domElement._virtualElement;
+  if (!virtualElement) {
+    domElement.remove();
+    return;
+  }
+
+  // Recursively unmount children first
+  while (domElement.childNodes.length > 0) {
+    unmountNode(domElement.firstChild);
+  }
+
+  // Remove event listeners to prevent memory leaks
+  if (virtualElement.props) {
+    Object.keys(virtualElement.props).forEach((propName) => {
+      if (propName.slice(0, 2) === "on") {
+        const event = propName.toLowerCase().slice(2);
+        domElement.removeEventListener(event, virtualElement.props[propName]);
+      }
+    });
+  }
+
+  // Remove from DOM
+  domElement.remove();
 }
 
 // ── Create DOM from VDOM (full subtree) ─────────────────────────────
