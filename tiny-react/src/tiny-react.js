@@ -1,9 +1,4 @@
-// TinyReact — Module 2: createElement with normalized children
-//
-// createElement now:
-// 1. Flattens nested children arrays
-// 2. Filters out null, undefined, true, false
-// 3. Wraps primitive values (strings, numbers) in "text" virtual elements
+// TinyReact — Module 3: Mounting to the Real DOM
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -11,7 +6,6 @@ function createElement(type, props, ...children) {
       if (child instanceof Object) {
         acc.push(child);
       } else {
-        // Wrap primitives (strings, numbers) as text virtual elements
         acc.push(createElement("text", { textContent: child }));
       }
     }
@@ -25,8 +19,44 @@ function createElement(type, props, ...children) {
   };
 }
 
+// ── Render entry point ──────────────────────────────────────────────
+
+function render(vdom, container) {
+  mountElement(vdom, container);
+}
+
+// ── Mounting ────────────────────────────────────────────────────────
+
+function mountElement(vdom, container) {
+  return mountSimpleNode(vdom, container);
+}
+
+function mountSimpleNode(vdom, container) {
+  let newDomElement;
+
+  if (vdom.type === "text") {
+    newDomElement = document.createTextNode(vdom.props.textContent);
+  } else {
+    newDomElement = document.createElement(vdom.type);
+  }
+
+  // Store a back-reference from the real DOM to the virtual DOM
+  newDomElement._virtualElement = vdom;
+
+  // Recursively mount all children
+  vdom.children.forEach((child) => {
+    mountElement(child, newDomElement);
+  });
+
+  container.appendChild(newDomElement);
+  return newDomElement;
+}
+
+// ── Public API ──────────────────────────────────────────────────────
+
 const TinyReact = {
   createElement,
+  render,
 };
 
 export default TinyReact;

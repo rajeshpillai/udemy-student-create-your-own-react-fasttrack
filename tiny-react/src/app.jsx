@@ -1,25 +1,20 @@
 import TinyReact from "./tiny-react";
 
-// Module 2: Test that children are properly normalized
+// Module 3: Our VDOM now renders to the real DOM!
+
+const root = document.getElementById("root");
 
 const element = (
   <div>
-    <h1 className="header">Hello Tiny React!</h1>
-    <h2>Building React from scratch</h2>
+    <h1>Hello Tiny React!</h1>
+    <h2>We can render to the real DOM now</h2>
     <div>
       nested text
       <div>nested 1.1</div>
     </div>
-    {/* These should be filtered out: */}
-    {false && <p>should not appear</p>}
-    {true && <p>this should appear</p>}
-    {null}
-    {undefined}
-    {/* Primitives should become text elements: */}
+    <p>This actually shows up on screen!</p>
     {42}
-    {"a string child"}
   </div>
 );
 
-console.log("VDOM tree:", element);
-console.log("Children count:", element.children.length, "(expect 6)");
+TinyReact.render(element, root);
