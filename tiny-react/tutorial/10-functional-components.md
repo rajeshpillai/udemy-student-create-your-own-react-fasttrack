@@ -96,10 +96,10 @@ function mountComponent(vdom, container, oldDomElement) {
 
   // A component might return another component — recurse
   if (typeof nextvDom.type === "function") {
-    return mountComponent(nextvDom, container, oldDomElement);
+    newDomElement = mountComponent(nextvDom, container, oldDomElement);
+  } else {
+    newDomElement = mountElement(nextvDom, container, oldDomElement);
   }
-
-  newDomElement = mountElement(nextvDom, container, oldDomElement);
 
   if (component) {
     component.setDomElement(newDomElement);
@@ -111,11 +111,25 @@ function mountComponent(vdom, container, oldDomElement) {
 
 Key points:
 - **Recursive composition**: A component can return another component. `<App />` might return `<Layout />` which returns `<div>`. We keep calling `mountComponent` until we reach a native element.
+- **No early return**: We use `if/else` instead of `return mountComponent(...)` so that code after the block (like storing DOM references) always runs. This is critical when we add hooks later — the outer component needs its DOM reference set even when it renders via an inner component.
 - **`buildStatefulComponent`** (for classes) stores a reference on the VDOM so we can find the component instance later during diffing.
 
 ### Component Diffing
 
-When the diff algorithm encounters a component type (`typeof vdom.type === "function"`), it delegates to:
+When the diff algorithm encounters a component type (`typeof vdom.type === "function"`), it needs to distinguish between functional and class components:
+
+```js
+// Inside the diff function:
+} else if (typeof vdom.type === "function") {
+  if (isFunctionalComponent(vdom)) {
+    diffFunctionalComponent(vdom, container, oldDom);
+  } else {
+    diffComponent(vdom, oldDom._virtualElement && oldDom._virtualElement.component, container, oldDom);
+  }
+}
+```
+
+**Class component diffing** — `diffComponent` works with component instances:
 
 ```js
 function diffComponent(newVirtualElement, oldComponent, container, domElement) {
@@ -129,6 +143,15 @@ function diffComponent(newVirtualElement, oldComponent, container, domElement) {
     // Different component type — remount
     mountElement(newVirtualElement, container, domElement);
   }
+}
+```
+
+**Functional component diffing** — we'll flesh this out in Module 12 when we add hooks. For now, a functional component simply remounts:
+
+```js
+function diffFunctionalComponent(newVdom, container, oldDom) {
+  // Will be enhanced with hook state preservation in Module 12
+  mountElement(newVdom, container, oldDom);
 }
 ```
 

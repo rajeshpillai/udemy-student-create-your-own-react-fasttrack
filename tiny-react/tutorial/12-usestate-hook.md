@@ -171,14 +171,56 @@ Step by step:
 
 ### Wire It Into mountComponent
 
-After mounting, store the DOM reference on the hook owner:
+After mounting, store the DOM reference on the hook owner. We also store the hook owner on the DOM element itself, so `diffFunctionalComponent` can find it later:
 
 ```js
-// In mountComponent, after mountElement:
+// In mountComponent, after the if/else that sets newDomElement:
 if (vdom._hookOwner) {
   vdom._hookOwner._dom = newDomElement;
+  // Only set _hookOwner on DOM for the innermost component
+  // (inner mounts run first, so only set if not already claimed)
+  if (!newDomElement._hookOwner) {
+    newDomElement._hookOwner = vdom._hookOwner;
+  }
 }
 ```
+
+Why `if (!newDomElement._hookOwner)`? When a component renders another component (e.g., `App → Provider → div`), the inner component's `mountComponent` runs first and claims the DOM element. The outer component still gets `_dom` set (so `setState` can find the DOM), but it doesn't overwrite the DOM's `_hookOwner` back-reference. This matters because `diffFunctionalComponent` uses `_hookOwner` to match the **direct** component that produced the DOM element.
+
+### Upgrade diffFunctionalComponent
+
+In Module 10, `diffFunctionalComponent` simply remounted. Now we can preserve hook state across parent re-renders:
+
+```js
+function diffFunctionalComponent(newVdom, container, oldDom) {
+  const oldHookOwner = oldDom._hookOwner;
+
+  if (oldHookOwner && oldHookOwner._vdom.type === newVdom.type) {
+    // Same functional component type — reuse hook state
+    newVdom._hookOwner = oldHookOwner;
+    oldHookOwner._vdom = newVdom;
+
+    // Re-render with new props
+    currentHookOwner = oldHookOwner;
+    hookIndex = 0;
+    const nextVdom = newVdom.type(newVdom.props || {});
+    currentHookOwner = null;
+
+    // Diff the rendered output against current DOM
+    diff(nextVdom, container, oldDom);
+
+    // Update DOM reference
+    if (oldDom.parentNode) {
+      oldHookOwner._dom = oldDom;
+    }
+  } else {
+    // Different component type or no previous hook owner — mount fresh
+    mountElement(newVdom, container, oldDom);
+  }
+}
+```
+
+This is the key to making hooks work with component composition. When a parent re-renders, it creates **new** VDOM objects for child components. Without this function, the child's hook state would be lost. `diffFunctionalComponent` transfers the old `_hookOwner` (with its hook array intact) to the new VDOM, re-renders the component, and diffs the result.
 
 ### Export useState
 
