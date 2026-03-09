@@ -1,4 +1,4 @@
-// TinyReact — Module 5: Style Props
+// TinyReact — Module 6: Diffing Same-Type Elements
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -21,8 +21,42 @@ function createElement(type, props, ...children) {
 
 // ── Render entry point ──────────────────────────────────────────────
 
-function render(vdom, container) {
-  mountElement(vdom, container);
+function render(vdom, container, oldDom = container.firstChild) {
+  diff(vdom, container, oldDom);
+}
+
+// ── Diffing ─────────────────────────────────────────────────────────
+
+function diff(vdom, container, oldDom) {
+  const oldvdom = oldDom && oldDom._virtualElement;
+
+  if (!oldDom) {
+    // No existing DOM — mount from scratch
+    mountElement(vdom, container);
+  } else if (oldvdom && oldvdom.type === vdom.type) {
+    // Same type — update in place
+    if (vdom.type === "text") {
+      updateTextNode(oldDom, vdom, oldvdom);
+    } else {
+      updateDomElement(oldDom, vdom, oldvdom);
+    }
+
+    // Update the back-reference to point to the new VDOM
+    oldDom._virtualElement = vdom;
+
+    // Recursively diff children by index
+    vdom.children.forEach((child, i) => {
+      diff(child, oldDom, oldDom.childNodes[i]);
+    });
+
+    // Remove extra old children
+    const oldNodes = oldDom.childNodes;
+    if (oldNodes.length > vdom.children.length) {
+      for (let i = oldNodes.length - 1; i >= vdom.children.length; i--) {
+        oldNodes[i].remove();
+      }
+    }
+  }
 }
 
 // ── Mounting ────────────────────────────────────────────────────────
@@ -53,40 +87,40 @@ function mountSimpleNode(vdom, container) {
 
 // ── DOM Element Updates ─────────────────────────────────────────────
 
+function updateTextNode(domElement, newVirtualElement, oldVirtualElement) {
+  if (newVirtualElement.props.textContent !== oldVirtualElement.props.textContent) {
+    domElement.textContent = newVirtualElement.props.textContent;
+  }
+  domElement._virtualElement = newVirtualElement;
+}
+
 function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {}) {
   const newProps = newVirtualElement.props || {};
   const oldProps = oldVirtualElement.props || {};
 
-  // Set new or changed properties
   Object.keys(newProps).forEach((propName) => {
     const newProp = newProps[propName];
     const oldProp = oldProps[propName];
 
     if (newProp !== oldProp) {
       if (propName.slice(0, 2) === "on") {
-        // Event handler: onClick → addEventListener("click", handler)
         const eventName = propName.toLowerCase().slice(2);
         domElement.addEventListener(eventName, newProp, false);
         if (oldProp) {
           domElement.removeEventListener(eventName, oldProp, false);
         }
       } else if (propName === "value" || propName === "checked") {
-        // Special properties that must be set directly, not via setAttribute
         domElement[propName] = newProp;
       } else if (propName === "className") {
-        // JSX uses className, HTML uses class
         domElement.setAttribute("class", newProp);
       } else if (propName === "style" && typeof newProp === "object") {
-        // Style object: { color: "red", fontSize: "14px" } → CSS string
         domElement.style.cssText = styleObjToCss(newProp);
       } else if (propName !== "children") {
-        // Standard attribute — skip "children" since that's our internal prop
         domElement.setAttribute(propName, newProp);
       }
     }
   });
 
-  // Remove properties that no longer exist
   Object.keys(oldProps).forEach((propName) => {
     const newProp = newProps[propName];
     const oldProp = oldProps[propName];
@@ -115,7 +149,6 @@ function styleObjToCss(styleObj) {
 }
 
 function jsToCss(s) {
-  // Convert camelCase to kebab-case: borderBottom → border-bottom
   return s.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 

@@ -1,30 +1,41 @@
 import TinyReact from "./tiny-react";
 
-// Module 5: Style objects work — just like in React!
+// Module 6: Diffing! Re-rendering now updates in place instead of duplicating.
 
 const root = document.getElementById("root");
 
-const headerStyle = {
-  color: "white",
-  backgroundColor: "darkblue",
-  padding: "10px 20px",
-  borderRadius: "4px",
-};
-
-const element = (
+const render1 = (
   <div>
-    <h1 style={headerStyle}>Hello Tiny React!</h1>
-    <p style={{ color: "gray", fontSize: "14px" }}>
-      Style objects are converted to CSS automatically.
-    </p>
-    <p style="color: green">String styles still work too.</p>
-    <button
-      style={{ padding: "8px 16px", borderBottom: "3px solid blue" }}
-      onClick={() => alert("Styled button!")}
-    >
-      Styled Button
-    </button>
+    <h1 className="header">Hello Tiny React!</h1>
+    <h2>This is the first render</h2>
+    <div>
+      nested 1<div>nested 1.1</div>
+    </div>
+    <h3>This will change</h3>
+    <span>This is some text</span>
+    <button onClick={() => alert("First render!")}>Click me</button>
+    <h3>This will be removed</h3>
   </div>
 );
 
-TinyReact.render(element, root);
+const render2 = (
+  <div>
+    <h1 className="header">Hello Tiny React!</h1>
+    <h2>This is the SECOND render</h2>
+    <div>
+      nested 1<div>nested 1.1</div>
+    </div>
+    <h3 style="background-color: yellow">I told you it would change!</h3>
+    <span>Updated text here</span>
+    <button onClick={() => alert("Second render!")}>Click me</button>
+  </div>
+);
+
+// First render
+TinyReact.render(render1, root);
+
+// Re-render after 3 seconds — only changed parts update!
+setTimeout(() => {
+  alert("About to re-render. Watch the DOM — only changes will update.");
+  TinyReact.render(render2, root);
+}, 3000);
