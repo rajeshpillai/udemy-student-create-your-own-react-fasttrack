@@ -1,4 +1,4 @@
-// TinyReact — Module 20: Event Delegation
+// TinyReact — Module 21: Concurrent Rendering
 
 // ── Fragment ─────────────────────────────────────────────────────────
 
@@ -23,16 +23,32 @@ function createElement(type, props, ...children) {
   };
 }
 
-// ── Update Batching ─────────────────────────────────────────────────
+// ── Update Batching + Priority Scheduler ─────────────────────────────
 
 let pendingUpdates = new Set();
+let pendingTransitions = new Set();
 let isBatching = false;
+let isTransitionBatching = false;
+let isInsideTransition = false;
 
 function scheduleUpdate(callback) {
-  pendingUpdates.add(callback);
-  if (!isBatching) {
-    isBatching = true;
-    queueMicrotask(flushBatch);
+  if (isInsideTransition) {
+    // Low-priority: defer to idle time
+    pendingTransitions.add(callback);
+    if (!isTransitionBatching) {
+      isTransitionBatching = true;
+      const schedule = typeof requestIdleCallback === "function"
+        ? requestIdleCallback
+        : (fn) => setTimeout(fn, 5);
+      schedule(flushTransitions);
+    }
+  } else {
+    // High-priority: flush on next microtask
+    pendingUpdates.add(callback);
+    if (!isBatching) {
+      isBatching = true;
+      queueMicrotask(flushBatch);
+    }
   }
 }
 
@@ -41,6 +57,19 @@ function flushBatch() {
   const updates = [...pendingUpdates];
   pendingUpdates.clear();
   updates.forEach((fn) => fn());
+}
+
+function flushTransitions() {
+  isTransitionBatching = false;
+  const updates = [...pendingTransitions];
+  pendingTransitions.clear();
+  updates.forEach((fn) => fn());
+}
+
+function startTransition(callback) {
+  isInsideTransition = true;
+  callback();
+  isInsideTransition = false;
 }
 
 // ── Hooks Infrastructure ────────────────────────────────────────────
@@ -837,6 +866,7 @@ const TinyReact = {
   createSignal,
   createEffect,
   createMemo,
+  startTransition,
 };
 
 export default TinyReact;

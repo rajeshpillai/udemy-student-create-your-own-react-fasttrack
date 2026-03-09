@@ -57,3 +57,4 @@ A step-by-step guide to building a React-like framework from scratch.
 | [18](./18-fragments.md) | Fragments | `<>...</>` via `Fragment` symbol + `display: contents` |
 | [19](./19-error-boundaries.md) | Error Boundaries | `componentDidCatch`, `getDerivedStateFromError`, component stack |
 | [20](./20-event-delegation.md) | Event Delegation | Delegated root listeners, handler storage on elements |
+| [21](./21-concurrent-rendering.md) | Concurrent Rendering | `startTransition`, priority queues, `requestIdleCallback` |
