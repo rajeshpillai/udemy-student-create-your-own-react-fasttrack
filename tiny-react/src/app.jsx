@@ -1,58 +1,44 @@
 import TinyReact from "./tiny-react";
 
-// Module 13: useEffect, useRef, useMemo, useCallback
+// Module 14: Context API — share state without prop drilling
 
 const root = document.getElementById("root");
 
-function Timer() {
-  const [seconds, setSeconds] = TinyReact.useState(0);
-  const [running, setRunning] = TinyReact.useState(true);
-  const intervalRef = TinyReact.useRef(null);
+// Create a theme context
+const ThemeContext = TinyReact.createContext("light");
 
-  TinyReact.useEffect(() => {
-    if (running) {
-      console.log("Effect: starting interval");
-      intervalRef.current = setInterval(() => {
-        setSeconds((s) => s + 1);
-      }, 1000);
+function ThemedButton() {
+  const theme = TinyReact.useContext(ThemeContext);
+  const style =
+    theme === "dark"
+      ? { background: "#333", color: "#fff", padding: "8px 16px", border: "none", borderRadius: "4px" }
+      : { background: "#eee", color: "#333", padding: "8px 16px", border: "1px solid #ccc", borderRadius: "4px" };
 
-      // Cleanup: runs before next effect and on unmount
-      return () => {
-        console.log("Cleanup: clearing interval");
-        clearInterval(intervalRef.current);
-      };
-    }
-  }, [running]); // Only re-run when `running` changes
+  return <button style={style}>I am {theme} themed!</button>;
+}
 
-  const formattedTime = TinyReact.useMemo(() => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }, [seconds]);
-
+function Toolbar() {
+  // No props needed — reads from context directly
   return (
-    <div style={{ marginTop: "20px" }}>
-      <h2>Timer: {formattedTime}</h2>
-      <p style={{ color: "gray" }}>
-        {running ? "Running..." : "Paused"} | Raw seconds: {seconds}
-      </p>
-      <button onClick={() => setRunning(!running)}>
-        {running ? "Pause" : "Resume"}
-      </button>
+    <div style={{ padding: "10px", marginTop: "10px" }}>
+      <p>Toolbar component (no theme prop passed!)</p>
+      <ThemedButton />
     </div>
   );
 }
 
 function App() {
-  const [showTimer, setShowTimer] = TinyReact.useState(true);
+  const [theme, setTheme] = TinyReact.useState("light");
 
   return (
     <div>
-      <h1>useEffect + useRef + useMemo Demo</h1>
-      <button onClick={() => setShowTimer(!showTimer)}>
-        {showTimer ? "Unmount Timer" : "Mount Timer"}
+      <h1>Context API Demo</h1>
+      <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+        Toggle Theme (current: {theme})
       </button>
-      {showTimer && <Timer />}
+      <ThemeContext.Provider value={theme}>
+        <Toolbar />
+      </ThemeContext.Provider>
     </div>
   );
 }

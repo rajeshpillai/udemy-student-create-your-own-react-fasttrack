@@ -1,4 +1,4 @@
-// TinyReact — Module 13: useEffect Hook
+// TinyReact — Module 14: Context API
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -133,6 +133,28 @@ function useMemo(factory, deps) {
 
 function useCallback(callback, deps) {
   return useMemo(() => callback, deps);
+}
+
+// ── Context API ─────────────────────────────────────────────────────
+
+function createContext(defaultValue) {
+  const context = {
+    _value: defaultValue,
+    _subscribers: new Set(),
+    Provider: function ContextProvider(props) {
+      context._value = props.value;
+      // Render children directly (no wrapper element)
+      if (props.children && props.children.length === 1) {
+        return props.children[0];
+      }
+      return createElement("span", null, ...(props.children || []));
+    },
+  };
+  return context;
+}
+
+function useContext(context) {
+  return context._value;
 }
 
 // ── Render entry point ──────────────────────────────────────────────
@@ -567,6 +589,8 @@ const TinyReact = {
   useRef,
   useMemo,
   useCallback,
+  createContext,
+  useContext,
 };
 
 export default TinyReact;
