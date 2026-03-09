@@ -1,60 +1,68 @@
 import TinyReact from "./tiny-react";
 
-// Module 10: Functional and Stateful Components!
+// Module 11: Lifecycle methods and refs
 
 const root = document.getElementById("root");
 
-// Functional component
-const Heart = (props) => <span style={props.style}>&hearts;</span>;
-
-// Functional component with children
-const Button = (props) => (
-  <button onClick={props.onClick}>{props.children}</button>
-);
-
-// Functional component composing other components
-const Greeting = (props) => (
-  <div className="greeting">
-    <h2>Welcome, {props.name}!</h2>
-    <Button onClick={() => alert("I love React!")}>
-      I <Heart style={{ color: "red" }} /> React
-    </Button>
-  </div>
-);
-
-// Stateful component with setState
-class Counter extends TinyReact.Component {
+class Timer extends TinyReact.Component {
   constructor(props) {
     super(props);
-    this.state = { count: 0 };
-    this.increment = this.increment.bind(this);
-    this.decrement = this.decrement.bind(this);
+    this.state = { seconds: 0 };
   }
 
-  increment() {
-    this.setState({ count: this.state.count + 1 });
+  componentDidMount() {
+    console.log("Timer: componentDidMount — starting interval");
+    this.interval = setInterval(() => {
+      this.setState({ seconds: this.state.seconds + 1 });
+    }, 1000);
   }
 
-  decrement() {
-    this.setState({ count: this.state.count - 1 });
+  componentWillUnmount() {
+    console.log("Timer: componentWillUnmount — clearing interval");
+    clearInterval(this.interval);
+  }
+
+  componentDidUpdate() {
+    console.log("Timer: componentDidUpdate — seconds:", this.state.seconds);
+  }
+
+  render() {
+    return <p>Elapsed: {this.state.seconds}s</p>;
+  }
+}
+
+class App extends TinyReact.Component {
+  constructor(props) {
+    super(props);
+    this.state = { showTimer: true, inputValue: "" };
+    this.toggle = this.toggle.bind(this);
+  }
+
+  toggle() {
+    this.setState({ showTimer: !this.state.showTimer });
   }
 
   render() {
     return (
-      <div style={{ marginTop: "20px" }}>
-        <h2>Counter: {this.state.count}</h2>
-        <Button onClick={this.decrement}>-</Button>
-        <span style={{ padding: "0 10px" }}>{this.state.count}</span>
-        <Button onClick={this.increment}>+</Button>
+      <div>
+        <h1>Lifecycle & Refs Demo</h1>
+
+        <button onClick={this.toggle}>
+          {this.state.showTimer ? "Unmount Timer" : "Mount Timer"}
+        </button>
+        {this.state.showTimer && <Timer />}
+
+        <div style={{ marginTop: "20px" }}>
+          <h3>Ref Demo — focus the input:</h3>
+          <input
+            type="text"
+            placeholder="I get focused on mount"
+            ref={(el) => { if (el) el.focus(); }}
+          />
+        </div>
       </div>
     );
   }
 }
 
-TinyReact.render(
-  <div>
-    <Greeting name="Developer" />
-    <Counter />
-  </div>,
-  root
-);
+TinyReact.render(<App />, root);

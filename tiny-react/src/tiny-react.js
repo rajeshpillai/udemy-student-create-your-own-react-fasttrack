@@ -1,4 +1,4 @@
-// TinyReact — Module 10: Functional Components
+// TinyReact — Module 11: Lifecycle Methods & Refs
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -173,6 +173,11 @@ function mountComponent(vdom, container, oldDomElement) {
   // Store component reference on the DOM for diffing
   if (component) {
     component.setDomElement(newDomElement);
+    component.componentDidMount();
+    // Support ref on component: ref receives the component instance
+    if (component.props.ref) {
+      component.props.ref(component);
+    }
   }
 
   return newDomElement;
@@ -183,11 +188,18 @@ function diffComponent(newVirtualElement, oldComponent, container, domElement) {
     oldComponent &&
     newVirtualElement.type === oldComponent.constructor
   ) {
-    // Same component type — update props and re-render
-    oldComponent.updateProps(newVirtualElement.props);
-    const nextElement = oldComponent.render();
-    nextElement.component = oldComponent;
-    diff(nextElement, container, domElement);
+    // Same component type — check shouldComponentUpdate
+    if (oldComponent.shouldComponentUpdate(newVirtualElement.props, oldComponent.state)) {
+      const prevProps = oldComponent.props;
+
+      // Update props and re-render
+      oldComponent.updateProps(newVirtualElement.props);
+      const nextElement = oldComponent.render();
+      nextElement.component = oldComponent;
+      diff(nextElement, container, domElement);
+
+      oldComponent.componentDidUpdate(prevProps);
+    }
   } else {
     // Different component type — remount
     mountElement(newVirtualElement, container, domElement);
@@ -219,10 +231,21 @@ function mountSimpleNode(vdom, container, oldDomElement) {
     container.appendChild(newDomElement);
   }
 
+  // Store component reference on the DOM element
+  const component = vdom.component;
+  if (component) {
+    component.setDomElement(newDomElement);
+  }
+
   // Recursively mount children
   vdom.children.forEach((child) => {
     mountElement(child, newDomElement);
   });
+
+  // Call ref callback with the real DOM element
+  if (vdom.props && vdom.props.ref) {
+    vdom.props.ref(newDomElement);
+  }
 
   return newDomElement;
 }
@@ -236,9 +259,20 @@ function unmountNode(domElement) {
     return;
   }
 
+  // Call componentWillUnmount lifecycle
+  const oldComponent = virtualElement.component;
+  if (oldComponent) {
+    oldComponent.componentWillUnmount();
+  }
+
   // Recursively unmount children first
   while (domElement.childNodes.length > 0) {
     unmountNode(domElement.firstChild);
+  }
+
+  // Clear ref callback
+  if (virtualElement.props && virtualElement.props.ref) {
+    virtualElement.props.ref(null);
   }
 
   // Remove event listeners to prevent memory leaks
@@ -271,6 +305,10 @@ function createDomElement(vdom) {
   vdom.children.forEach((child) => {
     newDomElement.appendChild(createDomElement(child));
   });
+
+  if (vdom.props && vdom.props.ref) {
+    vdom.props.ref(newDomElement);
+  }
 
   return newDomElement;
 }
