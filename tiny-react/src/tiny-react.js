@@ -1,4 +1,4 @@
-// TinyReact — Module 11: Lifecycle Methods & Refs
+// TinyReact — Module 12: useState Hook
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -17,6 +17,56 @@ function createElement(type, props, ...children) {
     children: childElements,
     props: { ...props, children: childElements },
   };
+}
+
+// ── Hooks Infrastructure ────────────────────────────────────────────
+
+let currentHookOwner = null; // The component currently being rendered
+let hookIndex = 0; // Which hook we're on in the current render
+const hookStates = new WeakMap(); // component → hooks[]
+
+function getHooks(owner) {
+  if (!hookStates.has(owner)) {
+    hookStates.set(owner, []);
+  }
+  return hookStates.get(owner);
+}
+
+function reRenderFunctionalComponent(owner) {
+  const dom = owner._dom;
+  if (!dom || !dom.parentNode) return;
+  const container = dom.parentNode;
+  const vdom = owner._vdom;
+
+  // Set hook context
+  currentHookOwner = owner;
+  hookIndex = 0;
+  const newVdom = vdom.type(vdom.props || {});
+  currentHookOwner = null;
+
+  diff(newVdom, container, dom);
+}
+
+function useState(initialValue) {
+  const owner = currentHookOwner;
+  const hooks = getHooks(owner);
+  const idx = hookIndex++;
+
+  // Initialize on first render
+  if (hooks[idx] === undefined) {
+    hooks[idx] = typeof initialValue === "function" ? initialValue() : initialValue;
+  }
+
+  const setState = (newValue) => {
+    const current = hooks[idx];
+    const next = typeof newValue === "function" ? newValue(current) : newValue;
+    if (next !== current) {
+      hooks[idx] = next;
+      reRenderFunctionalComponent(owner);
+    }
+  };
+
+  return [hooks[idx], setState];
 }
 
 // ── Render entry point ──────────────────────────────────────────────
@@ -143,7 +193,20 @@ function isFunctionalComponent(vdom) {
 }
 
 function buildFunctionalComponent(vdom) {
-  return vdom.type(vdom.props || {});
+  // Create a hook owner for this functional component instance
+  if (!vdom._hookOwner) {
+    vdom._hookOwner = { _dom: null, _vdom: vdom };
+  }
+  const owner = vdom._hookOwner;
+  owner._vdom = vdom;
+
+  // Set hook context before calling the component function
+  currentHookOwner = owner;
+  hookIndex = 0;
+  const result = vdom.type(vdom.props || {});
+  currentHookOwner = null;
+
+  return result;
 }
 
 function buildStatefulComponent(vdom) {
@@ -169,6 +232,11 @@ function mountComponent(vdom, container, oldDomElement) {
   }
 
   newDomElement = mountElement(nextvDom, container, oldDomElement);
+
+  // Store hook owner's DOM reference for functional components
+  if (vdom._hookOwner) {
+    vdom._hookOwner._dom = newDomElement;
+  }
 
   // Store component reference on the DOM for diffing
   if (component) {
@@ -428,6 +496,7 @@ const TinyReact = {
   createElement,
   render,
   Component,
+  useState,
 };
 
 export default TinyReact;
