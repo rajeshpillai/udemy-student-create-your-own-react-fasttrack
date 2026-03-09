@@ -11,6 +11,10 @@
 
 # production
 /build
+/dist
+
+# lock files
+bun.lock
 
 # misc
 .DS_Store
