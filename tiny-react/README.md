@@ -1,6 +1,6 @@
 # TinyReact — Build Your Own React From Scratch
 
-A ~700-line React clone built step-by-step across 18 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, performance, and more.
+A ~700-line React clone built step-by-step across 19 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, performance, fragments, and more.
 
 ## Quick Start
 
@@ -73,6 +73,7 @@ After editing, just check your browser — Vite hot-reloads automatically.
 | **15** Capstone Todo (Hooks) | Full CRUD todo app: add, edit, delete, complete, theme toggle |
 | **16** Signals + Todo (Signals) | Same todo app rebuilt with signals — no hooks, no dependency arrays |
 | **17** Performance | `memo` skips unchanged components. Batching + signal auto-tracking |
+| **18** Fragments | Use `<>...</>` — inspect DOM for `display: contents` wrapper |
 
 ## Project Structure
 
@@ -103,7 +104,7 @@ tiny-react/
 
 | Category | APIs |
 |---|---|
-| Virtual DOM | `createElement` |
+| Virtual DOM | `createElement`, `Fragment` |
 | Rendering | `render` |
 | Reconciliation | O(n) diffing, keyed lists, type replacement, unmounting |
 | Class Components | `Component`, `setState`, lifecycle methods |

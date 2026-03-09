@@ -286,4 +286,4 @@ To verify batching:
 
 ---
 
-[Previous: Module 16 — Signals](./16-signals.md)
+[Previous: Module 16 — Signals](./16-signals.md) | [Next: Module 18 — Fragments →](./18-fragments.md)

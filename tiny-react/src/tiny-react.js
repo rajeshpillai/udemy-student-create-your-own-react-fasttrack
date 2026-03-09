@@ -1,4 +1,8 @@
-// TinyReact — Module 14: Context API
+// TinyReact — Module 18: Fragments, Error Boundaries & More
+
+// ── Fragment ─────────────────────────────────────────────────────────
+
+const Fragment = Symbol("TinyReact.Fragment");
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -453,6 +457,10 @@ function mountSimpleNode(vdom, container, oldDomElement) {
 
   if (vdom.type === "text") {
     newDomElement = document.createTextNode(vdom.props.textContent);
+  } else if (vdom.type === Fragment) {
+    // Fragment: invisible wrapper that doesn't affect layout
+    newDomElement = document.createElement("div");
+    newDomElement.style.display = "contents";
   } else {
     newDomElement = document.createElement(vdom.type);
     updateDomElement(newDomElement, vdom);
@@ -536,6 +544,9 @@ function createDomElement(vdom) {
   let newDomElement;
   if (vdom.type === "text") {
     newDomElement = document.createTextNode(vdom.props.textContent);
+  } else if (vdom.type === Fragment) {
+    newDomElement = document.createElement("div");
+    newDomElement.style.display = "contents";
   } else {
     newDomElement = document.createElement(vdom.type);
     updateDomElement(newDomElement, vdom);
@@ -734,6 +745,7 @@ function memo(component, areEqual) {
 
 const TinyReact = {
   createElement,
+  Fragment,
   render,
   Component,
   memo,

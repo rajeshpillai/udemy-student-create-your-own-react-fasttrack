@@ -29,7 +29,7 @@ function LandingPage() {
       <div style={{ textAlign: "center", marginBottom: "40px" }}>
         <h1 style={{ fontSize: "36px", marginBottom: "8px" }}>TinyReact</h1>
         <p style={{ color: "#666", fontSize: "16px", margin: "0" }}>
-          A ~650-line React clone built from scratch. Two todo apps, two paradigms.
+          A ~700-line React clone built from scratch. Two todo apps, two paradigms.
         </p>
       </div>
 
@@ -58,7 +58,7 @@ function LandingPage() {
 
       <div style={{ textAlign: "center", marginTop: "32px", color: "#999", fontSize: "13px" }}>
         <p>
-          16 tutorial modules | <a href="https://github.com/rajeshpillai/udemy-student-create-your-own-react-fasttrack" style={{ color: "#666" }}>Source on GitHub</a>
+          18 tutorial modules | <a href="https://github.com/rajeshpillai/udemy-student-create-your-own-react-fasttrack" style={{ color: "#666" }}>Source on GitHub</a>
         </p>
       </div>
     </div>

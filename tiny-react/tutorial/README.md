@@ -49,3 +49,9 @@ A step-by-step guide to building a React-like framework from scratch.
 |---|---|---|
 | [16](./16-signals.md) | Signals | `createSignal`, `createEffect`, `createMemo` + Signals Todo App |
 | [17](./17-performance.md) | Performance | `memo`, setState batching, signal auto-tracking |
+
+## Part 7: Production Features
+
+| Module | Topic | What You Build |
+|---|---|---|
+| [18](./18-fragments.md) | Fragments | `<>...</>` via `Fragment` symbol + `display: contents` |
