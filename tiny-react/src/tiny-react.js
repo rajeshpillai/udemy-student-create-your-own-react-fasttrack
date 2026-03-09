@@ -1,4 +1,4 @@
-// TinyReact — Module 12: useState Hook
+// TinyReact — Module 13: useEffect Hook
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -67,6 +67,72 @@ function useState(initialValue) {
   };
 
   return [hooks[idx], setState];
+}
+
+function useEffect(callback, deps) {
+  const owner = currentHookOwner;
+  const hooks = getHooks(owner);
+  const idx = hookIndex++;
+
+  const prevHook = hooks[idx];
+  const prevDeps = prevHook ? prevHook.deps : undefined;
+
+  // Determine if effect should run
+  const hasChanged =
+    !prevDeps || // First render (no previous deps)
+    !deps || // No deps array = run every render
+    deps.some((dep, i) => dep !== prevDeps[i]); // Any dep changed
+
+  if (hasChanged) {
+    // Store the new hook data immediately (before the effect runs)
+    hooks[idx] = { deps, cleanup: prevHook ? prevHook.cleanup : null };
+
+    // Schedule effect to run after render (async, like React)
+    queueMicrotask(() => {
+      // Run previous cleanup first
+      if (hooks[idx].cleanup) {
+        hooks[idx].cleanup();
+      }
+      // Run the effect and store its cleanup function
+      const cleanup = callback();
+      hooks[idx].cleanup = typeof cleanup === "function" ? cleanup : null;
+    });
+  } else {
+    // No change — keep previous hook data
+    hooks[idx] = prevHook;
+  }
+}
+
+function useRef(initialValue) {
+  const hooks = getHooks(currentHookOwner);
+  const idx = hookIndex++;
+
+  if (hooks[idx] === undefined) {
+    hooks[idx] = { current: initialValue };
+  }
+  return hooks[idx];
+}
+
+function useMemo(factory, deps) {
+  const hooks = getHooks(currentHookOwner);
+  const idx = hookIndex++;
+
+  const prevHook = hooks[idx];
+  const hasChanged =
+    !prevHook ||
+    !deps ||
+    deps.some((dep, i) => dep !== prevHook.deps[i]);
+
+  if (hasChanged) {
+    const value = factory();
+    hooks[idx] = { value, deps };
+    return value;
+  }
+  return prevHook.value;
+}
+
+function useCallback(callback, deps) {
+  return useMemo(() => callback, deps);
 }
 
 // ── Render entry point ──────────────────────────────────────────────
@@ -497,6 +563,10 @@ const TinyReact = {
   render,
   Component,
   useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
 };
 
 export default TinyReact;
