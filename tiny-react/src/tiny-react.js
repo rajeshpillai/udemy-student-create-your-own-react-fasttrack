@@ -1,4 +1,4 @@
-// TinyReact — Module 19: Error Boundaries
+// TinyReact — Module 20: Event Delegation
 
 // ── Fragment ─────────────────────────────────────────────────────────
 
@@ -578,15 +578,8 @@ function unmountNode(domElement) {
     virtualElement.props.ref(null);
   }
 
-  // Remove event listeners to prevent memory leaks
-  if (virtualElement.props) {
-    Object.keys(virtualElement.props).forEach((propName) => {
-      if (propName.slice(0, 2) === "on") {
-        const event = propName.toLowerCase().slice(2);
-        domElement.removeEventListener(event, virtualElement.props[propName]);
-      }
-    });
-  }
+  // Clear delegated event handlers (no removeEventListener needed)
+  domElement._eventHandlers = null;
 
   // Remove from DOM
   domElement.remove();
@@ -619,6 +612,31 @@ function createDomElement(vdom) {
   return newDomElement;
 }
 
+// ── Event Delegation ─────────────────────────────────────────────────
+// Instead of attaching listeners to every element, we attach ONE listener
+// per event type on the document and dispatch by walking up from the target.
+
+const delegatedEvents = new Set(); // Event types we've already registered
+
+function ensureDelegatedEvent(eventName) {
+  if (delegatedEvents.has(eventName)) return;
+  delegatedEvents.add(eventName);
+
+  document.addEventListener(eventName, (nativeEvent) => {
+    // Walk from target up to document, simulating bubbling
+    let target = nativeEvent.target;
+    while (target) {
+      const handlers = target._eventHandlers;
+      if (handlers && handlers[eventName]) {
+        handlers[eventName](nativeEvent);
+        // Stop if the handler called stopPropagation
+        if (nativeEvent.cancelBubble) break;
+      }
+      target = target.parentNode;
+    }
+  });
+}
+
 // ── DOM Element Updates ─────────────────────────────────────────────
 
 function updateTextNode(domElement, newVirtualElement, oldVirtualElement) {
@@ -639,10 +657,10 @@ function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {})
     if (newProp !== oldProp) {
       if (propName.slice(0, 2) === "on") {
         const eventName = propName.toLowerCase().slice(2);
-        domElement.addEventListener(eventName, newProp, false);
-        if (oldProp) {
-          domElement.removeEventListener(eventName, oldProp, false);
-        }
+        // Store handler on element, register delegation on document
+        if (!domElement._eventHandlers) domElement._eventHandlers = {};
+        domElement._eventHandlers[eventName] = newProp;
+        ensureDelegatedEvent(eventName);
       } else if (propName === "value" || propName === "checked") {
         domElement[propName] = newProp;
       } else if (propName === "className") {
@@ -657,12 +675,13 @@ function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {})
 
   Object.keys(oldProps).forEach((propName) => {
     const newProp = newProps[propName];
-    const oldProp = oldProps[propName];
 
     if (!newProp) {
       if (propName.slice(0, 2) === "on") {
         const eventName = propName.toLowerCase().slice(2);
-        domElement.removeEventListener(eventName, oldProp, false);
+        if (domElement._eventHandlers) {
+          delete domElement._eventHandlers[eventName];
+        }
       } else if (propName !== "children") {
         domElement.removeAttribute(propName);
       }
