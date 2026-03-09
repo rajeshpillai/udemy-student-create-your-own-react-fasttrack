@@ -1,4 +1,4 @@
-// TinyReact — Module 9: Keyed Reconciliation
+// TinyReact — Module 10: Functional Components
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -37,6 +37,9 @@ function diff(vdom, container, oldDom) {
     // Different type (and not a component) — replace entirely
     const newDomElement = createDomElement(vdom);
     oldDom.parentNode.replaceChild(newDomElement, oldDom);
+  } else if (typeof vdom.type === "function") {
+    // Component — delegate to component diffing
+    diffComponent(vdom, oldDom._virtualElement.component, container, oldDom);
   } else if (oldvdom && oldvdom.type === vdom.type) {
     // Same type — update in place
     if (vdom.type === "text") {
@@ -121,7 +124,74 @@ function diff(vdom, container, oldDom) {
 // ── Mounting ────────────────────────────────────────────────────────
 
 function mountElement(vdom, container, oldDomElement) {
-  return mountSimpleNode(vdom, container, oldDomElement);
+  if (typeof vdom.type === "function") {
+    return mountComponent(vdom, container, oldDomElement);
+  } else {
+    return mountSimpleNode(vdom, container, oldDomElement);
+  }
+}
+
+// ── Component Mounting & Diffing ────────────────────────────────────
+
+function isFunctionalComponent(vdom) {
+  const nodeType = vdom && vdom.type;
+  return (
+    nodeType &&
+    typeof nodeType === "function" &&
+    !(nodeType.prototype && nodeType.prototype.render)
+  );
+}
+
+function buildFunctionalComponent(vdom) {
+  return vdom.type(vdom.props || {});
+}
+
+function buildStatefulComponent(vdom) {
+  const component = new vdom.type(vdom.props);
+  const nextElement = component.render();
+  nextElement.component = component;
+  return nextElement;
+}
+
+function mountComponent(vdom, container, oldDomElement) {
+  let nextvDom, component, newDomElement;
+
+  if (isFunctionalComponent(vdom)) {
+    nextvDom = buildFunctionalComponent(vdom);
+  } else {
+    nextvDom = buildStatefulComponent(vdom);
+    component = nextvDom.component;
+  }
+
+  // A component might return another component — recurse
+  if (typeof nextvDom.type === "function") {
+    return mountComponent(nextvDom, container, oldDomElement);
+  }
+
+  newDomElement = mountElement(nextvDom, container, oldDomElement);
+
+  // Store component reference on the DOM for diffing
+  if (component) {
+    component.setDomElement(newDomElement);
+  }
+
+  return newDomElement;
+}
+
+function diffComponent(newVirtualElement, oldComponent, container, domElement) {
+  if (
+    oldComponent &&
+    newVirtualElement.type === oldComponent.constructor
+  ) {
+    // Same component type — update props and re-render
+    oldComponent.updateProps(newVirtualElement.props);
+    const nextElement = oldComponent.render();
+    nextElement.component = oldComponent;
+    diff(nextElement, container, domElement);
+  } else {
+    // Different component type — remount
+    mountElement(newVirtualElement, container, domElement);
+  }
 }
 
 function mountSimpleNode(vdom, container, oldDomElement) {
@@ -272,11 +342,54 @@ function jsToCss(s) {
   return s.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
+// ── Component Base Class ─────────────────────────────────────────────
+
+class Component {
+  constructor(props) {
+    this.props = props;
+    this.state = {};
+    this.prevState = {};
+  }
+
+  setState(nextState) {
+    if (!this.prevState) this.prevState = this.state;
+    this.state = Object.assign({}, this.state, nextState);
+
+    const dom = this.getDomElement();
+    const container = dom.parentNode;
+    const newvdom = this.render();
+
+    // Diff the new render against the current DOM
+    diff(newvdom, container, dom);
+  }
+
+  setDomElement(dom) {
+    this._dom = dom;
+  }
+
+  getDomElement() {
+    return this._dom;
+  }
+
+  updateProps(props) {
+    this.props = props;
+  }
+
+  // Lifecycle stubs — override in subclasses
+  componentDidMount() {}
+  componentWillUnmount() {}
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextProps !== this.props || nextState !== this.state;
+  }
+  componentDidUpdate(prevProps, prevState) {}
+}
+
 // ── Public API ──────────────────────────────────────────────────────
 
 const TinyReact = {
   createElement,
   render,
+  Component,
 };
 
 export default TinyReact;

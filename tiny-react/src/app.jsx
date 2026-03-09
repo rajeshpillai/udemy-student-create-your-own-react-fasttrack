@@ -1,46 +1,60 @@
 import TinyReact from "./tiny-react";
 
-// Module 9: Keyed reconciliation — items reorder instead of being recreated
+// Module 10: Functional and Stateful Components!
 
 const root = document.getElementById("root");
 
-const items1 = [
-  { id: 1, text: "Apple" },
-  { id: 2, text: "Banana" },
-  { id: 3, text: "Cherry" },
-  { id: 4, text: "Date" },
-];
+// Functional component
+const Heart = (props) => <span style={props.style}>&hearts;</span>;
 
-const items2 = [
-  { id: 3, text: "Cherry" },
-  { id: 1, text: "Apple" },
-  { id: 4, text: "Date" },
-  // id: 2 (Banana) is removed
-];
+// Functional component with children
+const Button = (props) => (
+  <button onClick={props.onClick}>{props.children}</button>
+);
 
-function renderList(items) {
-  return (
-    <div>
-      <h1>Keyed List Demo</h1>
-      <p>Items will reorder and one will be removed in 5 seconds.</p>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id} style={{ padding: "8px", borderBottom: "1px solid #ccc" }}>
-            {item.id}: {item.text}
-            <input type="text" placeholder={"Type in " + item.text} />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+// Functional component composing other components
+const Greeting = (props) => (
+  <div className="greeting">
+    <h2>Welcome, {props.name}!</h2>
+    <Button onClick={() => alert("I love React!")}>
+      I <Heart style={{ color: "red" }} /> React
+    </Button>
+  </div>
+);
+
+// Stateful component with setState
+class Counter extends TinyReact.Component {
+  constructor(props) {
+    super(props);
+    this.state = { count: 0 };
+    this.increment = this.increment.bind(this);
+    this.decrement = this.decrement.bind(this);
+  }
+
+  increment() {
+    this.setState({ count: this.state.count + 1 });
+  }
+
+  decrement() {
+    this.setState({ count: this.state.count - 1 });
+  }
+
+  render() {
+    return (
+      <div style={{ marginTop: "20px" }}>
+        <h2>Counter: {this.state.count}</h2>
+        <Button onClick={this.decrement}>-</Button>
+        <span style={{ padding: "0 10px" }}>{this.state.count}</span>
+        <Button onClick={this.increment}>+</Button>
+      </div>
+    );
+  }
 }
 
-TinyReact.render(renderList(items1), root);
-
-setTimeout(() => {
-  alert(
-    "Re-rendering with reordered list. Type something in the inputs first!\n" +
-    "With keys: inputs follow their items.\nWithout keys: inputs would stay in position."
-  );
-  TinyReact.render(renderList(items2), root);
-}, 5000);
+TinyReact.render(
+  <div>
+    <Greeting name="Developer" />
+    <Counter />
+  </div>,
+  root
+);
