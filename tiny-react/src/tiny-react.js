@@ -1,10 +1,28 @@
-// TinyReact — Module 1: createElement stub
+// TinyReact — Module 2: createElement with normalized children
 //
-// This is where we'll build our React clone, one function at a time.
-// Right now, all we have is a stub that logs what JSX compiles to.
+// createElement now:
+// 1. Flattens nested children arrays
+// 2. Filters out null, undefined, true, false
+// 3. Wraps primitive values (strings, numbers) in "text" virtual elements
 
 function createElement(type, props, ...children) {
-  console.log("createElement", { type, props, children });
+  const childElements = [].concat(...children).reduce((acc, child) => {
+    if (child != null && child !== true && child !== false) {
+      if (child instanceof Object) {
+        acc.push(child);
+      } else {
+        // Wrap primitives (strings, numbers) as text virtual elements
+        acc.push(createElement("text", { textContent: child }));
+      }
+    }
+    return acc;
+  }, []);
+
+  return {
+    type,
+    children: childElements,
+    props: { ...props, children: childElements },
+  };
 }
 
 const TinyReact = {
