@@ -243,4 +243,4 @@ For a teaching framework, the wrapper approach is the right call. It's honest ab
 
 ---
 
-[Previous: Module 17 — Performance](./17-performance.md) | [Next: Module 19 — Error Boundaries →](./19-error-boundaries.md)
+[Previous: Module 17 — Performance](./17-performance.md) | [Next: Module 19 — Error Boundaries](./19-error-boundaries.md)

@@ -55,3 +55,4 @@ A step-by-step guide to building a React-like framework from scratch.
 | Module | Topic | What You Build |
 |---|---|---|
 | [18](./18-fragments.md) | Fragments | `<>...</>` via `Fragment` symbol + `display: contents` |
+| [19](./19-error-boundaries.md) | Error Boundaries | `componentDidCatch`, `getDerivedStateFromError`, component stack |

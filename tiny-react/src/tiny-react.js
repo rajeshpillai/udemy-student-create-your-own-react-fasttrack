@@ -1,4 +1,4 @@
-// TinyReact — Module 18: Fragments, Error Boundaries & More
+// TinyReact — Module 19: Error Boundaries
 
 // ── Fragment ─────────────────────────────────────────────────────────
 
@@ -48,6 +48,10 @@ function flushBatch() {
 let currentHookOwner = null; // The component currently being rendered
 let hookIndex = 0; // Which hook we're on in the current render
 const hookStates = new WeakMap(); // component → hooks[]
+
+// ── Error Boundary Stack ─────────────────────────────────────────────
+
+const componentStack = []; // Tracks class components during render for error boundaries
 
 function getHooks(owner) {
   if (!hookStates.has(owner)) {
@@ -343,21 +347,70 @@ function buildStatefulComponent(vdom) {
   return nextElement;
 }
 
+// ── Error Boundary Helpers ───────────────────────────────────────────
+
+function isErrorBoundary(component) {
+  // A class component is an error boundary if it overrides componentDidCatch
+  // or provides a static getDerivedStateFromError
+  return (
+    (component.componentDidCatch !== Component.prototype.componentDidCatch) ||
+    (component.constructor.getDerivedStateFromError !== Component.getDerivedStateFromError)
+  );
+}
+
+function handleRenderError(error, container, oldDomElement) {
+  // Walk the component stack to find the nearest error boundary
+  for (let i = componentStack.length - 1; i >= 0; i--) {
+    const boundary = componentStack[i];
+    if (isErrorBoundary(boundary)) {
+      // Found an error boundary — derive error state
+      const derivedState = boundary.constructor.getDerivedStateFromError(error);
+      if (derivedState) {
+        boundary.state = Object.assign({}, boundary.state, derivedState);
+      }
+
+      // Notify the boundary
+      const info = { componentStack: componentStack.map(c => c.constructor.name).join(" > ") };
+      boundary.componentDidCatch(error, info);
+
+      // Re-render the boundary with error state
+      const dom = boundary.getDomElement();
+      if (dom && dom.parentNode) {
+        const newVdom = boundary.render();
+        diff(newVdom, dom.parentNode, dom);
+      }
+      return;
+    }
+  }
+  // No error boundary found — rethrow
+  throw error;
+}
+
 function mountComponent(vdom, container, oldDomElement) {
   let nextvDom, component, newDomElement;
 
-  if (isFunctionalComponent(vdom)) {
-    nextvDom = buildFunctionalComponent(vdom);
-  } else {
-    nextvDom = buildStatefulComponent(vdom);
-    component = nextvDom.component;
-  }
+  try {
+    if (isFunctionalComponent(vdom)) {
+      nextvDom = buildFunctionalComponent(vdom);
+    } else {
+      nextvDom = buildStatefulComponent(vdom);
+      component = nextvDom.component;
+      componentStack.push(component);
+    }
 
-  // A component might return another component — recurse
-  if (typeof nextvDom.type === "function") {
-    newDomElement = mountComponent(nextvDom, container, oldDomElement);
-  } else {
-    newDomElement = mountElement(nextvDom, container, oldDomElement);
+    // A component might return another component — recurse
+    if (typeof nextvDom.type === "function") {
+      newDomElement = mountComponent(nextvDom, container, oldDomElement);
+    } else {
+      newDomElement = mountElement(nextvDom, container, oldDomElement);
+    }
+  } catch (error) {
+    if (component) componentStack.pop();
+    handleRenderError(error, container, oldDomElement);
+    // Return a fallback empty node so the parent can continue
+    newDomElement = document.createTextNode("");
+    container.appendChild(newDomElement);
+    return newDomElement;
   }
 
   // Store hook owner's DOM reference for functional components
@@ -372,6 +425,7 @@ function mountComponent(vdom, container, oldDomElement) {
 
   // Store component reference on the DOM for diffing
   if (component) {
+    componentStack.pop();
     component.setDomElement(newDomElement);
     component.componentDidMount();
     // Support ref on component: ref receives the component instance
@@ -676,6 +730,11 @@ class Component {
     return nextProps !== this.props || nextState !== this.state;
   }
   componentDidUpdate(prevProps, prevState) {}
+  componentDidCatch(error, info) {}
+
+  static getDerivedStateFromError(error) {
+    return null;
+  }
 }
 
 // ── Signals ─────────────────────────────────────────────────────────
