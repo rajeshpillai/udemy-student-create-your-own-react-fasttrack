@@ -176,8 +176,12 @@ function diff(vdom, container, oldDom) {
     const newDomElement = createDomElement(vdom);
     oldDom.parentNode.replaceChild(newDomElement, oldDom);
   } else if (typeof vdom.type === "function") {
-    // Component — delegate to component diffing
-    diffComponent(vdom, oldDom._virtualElement.component, container, oldDom);
+    // Component — delegate to appropriate diffing
+    if (isFunctionalComponent(vdom)) {
+      diffFunctionalComponent(vdom, container, oldDom);
+    } else {
+      diffComponent(vdom, oldDom._virtualElement && oldDom._virtualElement.component, container, oldDom);
+    }
   } else if (oldvdom && oldvdom.type === vdom.type) {
     // Same type — update in place
     if (vdom.type === "text") {
@@ -316,14 +320,19 @@ function mountComponent(vdom, container, oldDomElement) {
 
   // A component might return another component — recurse
   if (typeof nextvDom.type === "function") {
-    return mountComponent(nextvDom, container, oldDomElement);
+    newDomElement = mountComponent(nextvDom, container, oldDomElement);
+  } else {
+    newDomElement = mountElement(nextvDom, container, oldDomElement);
   }
-
-  newDomElement = mountElement(nextvDom, container, oldDomElement);
 
   // Store hook owner's DOM reference for functional components
   if (vdom._hookOwner) {
     vdom._hookOwner._dom = newDomElement;
+    // Only set _hookOwner on DOM for the innermost component
+    // (inner mounts run first, so only set if not already claimed)
+    if (!newDomElement._hookOwner) {
+      newDomElement._hookOwner = vdom._hookOwner;
+    }
   }
 
   // Store component reference on the DOM for diffing
@@ -337,6 +346,33 @@ function mountComponent(vdom, container, oldDomElement) {
   }
 
   return newDomElement;
+}
+
+function diffFunctionalComponent(newVdom, container, oldDom) {
+  const oldHookOwner = oldDom._hookOwner;
+
+  if (oldHookOwner && oldHookOwner._vdom.type === newVdom.type) {
+    // Same functional component type — reuse hook state
+    newVdom._hookOwner = oldHookOwner;
+    oldHookOwner._vdom = newVdom;
+
+    // Re-render with new props
+    currentHookOwner = oldHookOwner;
+    hookIndex = 0;
+    const nextVdom = newVdom.type(newVdom.props || {});
+    currentHookOwner = null;
+
+    // Diff the rendered output against current DOM
+    diff(nextVdom, container, oldDom);
+
+    // Update DOM reference (stays same for same-type root elements)
+    if (oldDom.parentNode) {
+      oldHookOwner._dom = oldDom;
+    }
+  } else {
+    // Different component type or no previous hook owner — mount fresh
+    mountElement(newVdom, container, oldDom);
+  }
 }
 
 function diffComponent(newVirtualElement, oldComponent, container, domElement) {
