@@ -187,10 +187,20 @@ setTimeout(() => {
 
 After the re-render, check the Elements panel — Buttons 2 and 3 are gone. Their event listeners are also cleaned up (no stale references in the Event Listeners panel).
 
+## Note: Simplified by Event Delegation (Module 20)
+
+The `removeEventListener` loop shown here is correct for direct event handling. In [Module 20](./20-event-delegation.md), when we switch to event delegation, the entire cleanup simplifies to:
+
+```js
+domElement._eventHandlers = null;
+```
+
+No `removeEventListener` calls needed — the delegated listener on `document` checks for handlers on each element. When `_eventHandlers` is null, no handler fires. The element gets garbage collected with its handler map.
+
 ## Key Takeaways
 
 1. **`unmountNode` cleans up recursively** — children first, then the element itself
-2. **Event listeners must be explicitly removed** to prevent memory leaks
+2. **Event listeners must be explicitly removed** to prevent memory leaks (simplified by delegation in Module 20)
 3. **Use a `while` loop** when removing children, not a `for` loop (removal shifts indices)
 4. **`nextSibling` preserves position** when replacing elements — grab it before removing
 5. **`mountSimpleNode` now handles replacement** via the optional `oldDomElement` parameter

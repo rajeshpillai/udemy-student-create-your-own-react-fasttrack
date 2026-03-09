@@ -233,6 +233,26 @@ Check your browser:
 
 **Everything is interactive now.**
 
+## Note: Event Delegation Upgrade (Module 20)
+
+The event handling shown here attaches listeners directly to each DOM element with `addEventListener`. This works correctly but doesn't scale — 100 buttons means 100 click listeners.
+
+In [Module 20](./20-event-delegation.md), we upgrade to **event delegation**: one listener per event type on `document`, with handlers stored on elements as `_eventHandlers`. The `updateDomElement` code changes from:
+
+```js
+domElement.addEventListener(eventName, newProp, false);
+```
+
+to:
+
+```js
+if (!domElement._eventHandlers) domElement._eventHandlers = {};
+domElement._eventHandlers[eventName] = newProp;
+ensureDelegatedEvent(eventName);
+```
+
+For now, the direct approach teaches the concept. Module 20 shows the optimization.
+
 ## Key Takeaways
 
 1. **`updateDomElement(dom, newVdom, oldVdom)`** handles all prop types: events, special properties, className, and standard attributes
