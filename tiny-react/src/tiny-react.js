@@ -1,4 +1,4 @@
-// TinyReact — Module 3: Mounting to the Real DOM
+// TinyReact — Module 4: Attributes, Events & Properties
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -38,18 +38,65 @@ function mountSimpleNode(vdom, container) {
     newDomElement = document.createTextNode(vdom.props.textContent);
   } else {
     newDomElement = document.createElement(vdom.type);
+    updateDomElement(newDomElement, vdom);
   }
 
-  // Store a back-reference from the real DOM to the virtual DOM
   newDomElement._virtualElement = vdom;
 
-  // Recursively mount all children
   vdom.children.forEach((child) => {
     mountElement(child, newDomElement);
   });
 
   container.appendChild(newDomElement);
   return newDomElement;
+}
+
+// ── DOM Element Updates ─────────────────────────────────────────────
+
+function updateDomElement(domElement, newVirtualElement, oldVirtualElement = {}) {
+  const newProps = newVirtualElement.props || {};
+  const oldProps = oldVirtualElement.props || {};
+
+  // Set new or changed properties
+  Object.keys(newProps).forEach((propName) => {
+    const newProp = newProps[propName];
+    const oldProp = oldProps[propName];
+
+    if (newProp !== oldProp) {
+      if (propName.slice(0, 2) === "on") {
+        // Event handler: onClick → addEventListener("click", handler)
+        const eventName = propName.toLowerCase().slice(2);
+        domElement.addEventListener(eventName, newProp, false);
+        if (oldProp) {
+          domElement.removeEventListener(eventName, oldProp, false);
+        }
+      } else if (propName === "value" || propName === "checked") {
+        // Special properties that must be set directly, not via setAttribute
+        domElement[propName] = newProp;
+      } else if (propName === "className") {
+        // JSX uses className, HTML uses class
+        domElement.setAttribute("class", newProp);
+      } else if (propName !== "children") {
+        // Standard attribute — skip "children" since that's our internal prop
+        domElement.setAttribute(propName, newProp);
+      }
+    }
+  });
+
+  // Remove properties that no longer exist
+  Object.keys(oldProps).forEach((propName) => {
+    const newProp = newProps[propName];
+    const oldProp = oldProps[propName];
+
+    if (!newProp) {
+      if (propName.slice(0, 2) === "on") {
+        const eventName = propName.toLowerCase().slice(2);
+        domElement.removeEventListener(eventName, oldProp, false);
+      } else if (propName !== "children") {
+        domElement.removeAttribute(propName);
+      }
+    }
+  });
 }
 
 // ── Public API ──────────────────────────────────────────────────────

@@ -1,19 +1,17 @@
 import TinyReact from "./tiny-react";
 
-// Module 3: Our VDOM now renders to the real DOM!
+// Module 4: Attributes and events now work!
 
 const root = document.getElementById("root");
 
 const element = (
   <div>
-    <h1>Hello Tiny React!</h1>
-    <h2>We can render to the real DOM now</h2>
-    <div>
-      nested text
-      <div>nested 1.1</div>
-    </div>
-    <p>This actually shows up on screen!</p>
-    {42}
+    <h1 className="header">Hello Tiny React!</h1>
+    <p>Attributes, events, and properties all work now.</p>
+    <button onClick={() => alert("Button clicked!")}>Click me!</button>
+    <br />
+    <input type="text" placeholder="Type something..." />
+    <a href="https://github.com" target="_blank">GitHub</a>
   </div>
 );
 
