@@ -43,8 +43,9 @@ A step-by-step guide to building a React-like framework from scratch.
 | [14](./14-context-api.md) | Context API | `createContext`, `useContext` |
 | [15](./15-capstone-todo-app.md) | Capstone: Todo App | Full app using all features |
 
-## Part 6: Signals
+## Part 6: Signals & Performance
 
 | Module | Topic | What You Build |
 |---|---|---|
 | [16](./16-signals.md) | Signals | `createSignal`, `createEffect`, `createMemo` + Signals Todo App |
+| [17](./17-performance.md) | Performance | `memo`, setState batching, signal auto-tracking |

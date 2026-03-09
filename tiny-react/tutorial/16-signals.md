@@ -299,4 +299,4 @@ These are all solvable — but the ~30 lines of signal code here teach the core 
 
 ---
 
-[Previous: Module 15 — Capstone: Todo App](./15-capstone-todo-app.md)
+[Previous: Module 15 — Capstone: Todo App](./15-capstone-todo-app.md) | [Next: Module 17 — Performance →](./17-performance.md)

@@ -8,9 +8,9 @@ const root = document.getElementById("root");
 
 const ThemeContext = TinyReact.createContext("light");
 
-// ── TodoItem Component ─────────────────────────────────────────────
+// ── TodoItem Component (memoized — skips re-render if props unchanged) ──
 
-function TodoItem({ task, onDelete, onToggleComplete, onToggleEdit, onUpdateTask }) {
+const TodoItem = TinyReact.memo(function TodoItem({ task, onDelete, onToggleComplete, onToggleEdit, onUpdateTask }) {
   const theme = TinyReact.useContext(ThemeContext);
   const inputRef = TinyReact.useRef(null);
 
@@ -67,7 +67,7 @@ function TodoItem({ task, onDelete, onToggleComplete, onToggleEdit, onUpdateTask
       </div>
     </li>
   );
-}
+});
 
 // ── TodoApp Component ──────────────────────────────────────────────
 

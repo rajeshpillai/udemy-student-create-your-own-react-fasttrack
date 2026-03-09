@@ -63,9 +63,9 @@ function saveEdit(taskId) {
   }
 }
 
-// ── TodoItem Component ──────────────────────────────────────────────
+// ── TodoItem Component (memoized — skips re-render if props unchanged) ──
 
-function TodoItem({ task }) {
+const TodoItem = TinyReact.memo(function TodoItem({ task }) {
   const currentTheme = theme();
 
   const itemStyle = {
@@ -114,7 +114,7 @@ function TodoItem({ task }) {
       </div>
     </li>
   );
-}
+});
 
 // ── TodoApp Component ───────────────────────────────────────────────
 
@@ -169,10 +169,14 @@ function TodoApp() {
   );
 }
 
-// ── The Magic: createEffect auto-tracks signals and re-renders ──────
-// No useState, no useEffect, no dependency arrays.
-// When tasks() or theme() change, this effect re-runs automatically.
+// ── Side effect: log changes (auto-tracks tasks and theme) ──────────
 
 TinyReact.createEffect(() => {
-  TinyReact.render(<TodoApp />, root);
+  console.log(`Todo count: ${tasks().length}, theme: ${theme()}`);
 });
+
+// ── Render once — signal changes auto-trigger re-renders ────────────
+// Components auto-subscribe to signals they read during render.
+// When a signal changes, only subscribed components re-render (batched).
+
+TinyReact.render(<TodoApp />, root);

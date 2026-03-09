@@ -1,6 +1,6 @@
 # TinyReact — Build Your Own React From Scratch
 
-A ~650-line React clone built step-by-step across 17 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, and more.
+A ~700-line React clone built step-by-step across 18 tutorial modules. Covers virtual DOM, reconciliation, components, hooks, context, signals, performance, and more.
 
 ## Quick Start
 
@@ -72,6 +72,7 @@ After editing, just check your browser — Vite hot-reloads automatically.
 | **14** Context | Toggle theme button — nested `ThemedButton` changes style without props |
 | **15** Capstone Todo (Hooks) | Full CRUD todo app: add, edit, delete, complete, theme toggle |
 | **16** Signals + Todo (Signals) | Same todo app rebuilt with signals — no hooks, no dependency arrays |
+| **17** Performance | `memo` skips unchanged components. Batching + signal auto-tracking |
 
 ## Project Structure
 
@@ -83,7 +84,7 @@ tiny-react/
 ├── package.json            # Vite dev dependency
 ├── vite.config.js          # JSX factory + multi-page config
 ├── src/
-│   ├── tiny-react.js       # The framework (~650 lines)
+│   ├── tiny-react.js       # The framework (~700 lines)
 │   ├── app.jsx             # Landing page
 │   ├── todo-hooks/
 │   │   └── app.jsx         # Todo app using hooks
@@ -94,7 +95,8 @@ tiny-react/
     ├── 00-project-setup.md
     ├── ...
     ├── 15-capstone-todo-app.md
-    └── 16-signals.md
+    ├── 16-signals.md
+    └── 17-performance.md
 ```
 
 ## What TinyReact Implements
@@ -108,6 +110,7 @@ tiny-react/
 | Hooks | `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback` |
 | Context | `createContext`, `useContext` |
 | Signals | `createSignal`, `createEffect`, `createMemo` |
+| Performance | `memo`, `scheduleUpdate` batching, signal auto-tracking |
 | DOM | Attributes, events, `className`, `style` objects, `value`/`checked`, refs |
 
 ## Prerequisites

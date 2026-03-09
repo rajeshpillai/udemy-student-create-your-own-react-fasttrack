@@ -19,6 +19,26 @@ function createElement(type, props, ...children) {
   };
 }
 
+// ── Update Batching ─────────────────────────────────────────────────
+
+let pendingUpdates = new Set();
+let isBatching = false;
+
+function scheduleUpdate(callback) {
+  pendingUpdates.add(callback);
+  if (!isBatching) {
+    isBatching = true;
+    queueMicrotask(flushBatch);
+  }
+}
+
+function flushBatch() {
+  isBatching = false;
+  const updates = [...pendingUpdates];
+  pendingUpdates.clear();
+  updates.forEach((fn) => fn());
+}
+
 // ── Hooks Infrastructure ────────────────────────────────────────────
 
 let currentHookOwner = null; // The component currently being rendered
@@ -38,10 +58,13 @@ function reRenderFunctionalComponent(owner) {
   const container = dom.parentNode;
   const vdom = owner._vdom;
 
-  // Set hook context
+  // Set hook and signal-tracking context
   currentHookOwner = owner;
   hookIndex = 0;
+  const prevTracker = currentTracker;
+  currentTracker = owner._rerender;
   const newVdom = vdom.type(vdom.props || {});
+  currentTracker = prevTracker;
   currentHookOwner = null;
 
   diff(newVdom, container, dom);
@@ -62,7 +85,7 @@ function useState(initialValue) {
     const next = typeof newValue === "function" ? newValue(current) : newValue;
     if (next !== current) {
       hooks[idx] = next;
-      reRenderFunctionalComponent(owner);
+      scheduleUpdate(owner._rerender);
     }
   };
 
@@ -292,10 +315,18 @@ function buildFunctionalComponent(vdom) {
   const owner = vdom._hookOwner;
   owner._vdom = vdom;
 
-  // Set hook context before calling the component function
+  // Create stable rerender function (used by batching and signal tracking)
+  if (!owner._rerender) {
+    owner._rerender = () => reRenderFunctionalComponent(owner);
+  }
+
+  // Set hook and signal-tracking context before calling the component
   currentHookOwner = owner;
   hookIndex = 0;
+  const prevTracker = currentTracker;
+  currentTracker = owner._rerender;
   const result = vdom.type(vdom.props || {});
+  currentTracker = prevTracker;
   currentHookOwner = null;
 
   return result;
@@ -352,14 +383,32 @@ function diffFunctionalComponent(newVdom, container, oldDom) {
   const oldHookOwner = oldDom._hookOwner;
 
   if (oldHookOwner && oldHookOwner._vdom.type === newVdom.type) {
+    // memo check: skip re-render if props unchanged
+    const componentFn = newVdom.type;
+    if (componentFn._isMemo) {
+      const areEqual = componentFn._areEqual;
+      if (areEqual(oldHookOwner._vdom.props || {}, newVdom.props || {})) {
+        oldHookOwner._vdom = newVdom;
+        return; // Props unchanged — skip re-render
+      }
+    }
+
+    // Cancel any pending batched update (parent is already re-rendering us)
+    if (oldHookOwner._rerender) {
+      pendingUpdates.delete(oldHookOwner._rerender);
+    }
+
     // Same functional component type — reuse hook state
     newVdom._hookOwner = oldHookOwner;
     oldHookOwner._vdom = newVdom;
 
-    // Re-render with new props
+    // Re-render with hook and signal-tracking context
     currentHookOwner = oldHookOwner;
     hookIndex = 0;
+    const prevTracker = currentTracker;
+    currentTracker = oldHookOwner._rerender;
     const nextVdom = newVdom.type(newVdom.props || {});
+    currentTracker = prevTracker;
     currentHookOwner = null;
 
     // Diff the rendered output against current DOM
@@ -585,12 +634,16 @@ class Component {
     if (!this.prevState) this.prevState = this.state;
     this.state = Object.assign({}, this.state, nextState);
 
-    const dom = this.getDomElement();
-    const container = dom.parentNode;
-    const newvdom = this.render();
-
-    // Diff the new render against the current DOM
-    diff(newvdom, container, dom);
+    if (!this._rerender) {
+      this._rerender = () => {
+        const dom = this.getDomElement();
+        if (!dom || !dom.parentNode) return;
+        const container = dom.parentNode;
+        const newvdom = this.render();
+        diff(newvdom, container, dom);
+      };
+    }
+    scheduleUpdate(this._rerender);
   }
 
   setDomElement(dom) {
@@ -633,8 +686,8 @@ function createSignal(initialValue) {
     const next = typeof newValue === "function" ? newValue(value) : newValue;
     if (next !== value) {
       value = next;
-      // Copy to avoid issues if a subscriber modifies the set during iteration
-      [...subscribers].forEach((fn) => fn());
+      // Batch signal notifications — multiple writes = single re-render
+      [...subscribers].forEach((fn) => scheduleUpdate(fn));
     }
   }
 
@@ -657,12 +710,33 @@ function createMemo(fn) {
   return read;
 }
 
+// ── memo ────────────────────────────────────────────────────────────
+
+function shallowEqual(objA, objB) {
+  if (objA === objB) return true;
+  if (!objA || !objB) return false;
+  const keysA = Object.keys(objA).filter((k) => k !== "children" && k !== "key");
+  const keysB = Object.keys(objB).filter((k) => k !== "children" && k !== "key");
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every((key) => objA[key] === objB[key]);
+}
+
+function memo(component, areEqual) {
+  function MemoizedComponent(props) {
+    return component(props);
+  }
+  MemoizedComponent._isMemo = true;
+  MemoizedComponent._areEqual = areEqual || shallowEqual;
+  return MemoizedComponent;
+}
+
 // ── Public API ──────────────────────────────────────────────────────
 
 const TinyReact = {
   createElement,
   render,
   Component,
+  memo,
   useState,
   useEffect,
   useRef,
