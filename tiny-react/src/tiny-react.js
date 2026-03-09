@@ -1,4 +1,4 @@
-// TinyReact — Module 6: Diffing Same-Type Elements
+// TinyReact — Module 7: Handling Type Mismatches
 
 function createElement(type, props, ...children) {
   const childElements = [].concat(...children).reduce((acc, child) => {
@@ -33,6 +33,10 @@ function diff(vdom, container, oldDom) {
   if (!oldDom) {
     // No existing DOM — mount from scratch
     mountElement(vdom, container);
+  } else if (oldvdom && oldvdom.type !== vdom.type && typeof vdom.type !== "function") {
+    // Different type (and not a component) — replace entirely
+    const newDomElement = createDomElement(vdom);
+    oldDom.parentNode.replaceChild(newDomElement, oldDom);
   } else if (oldvdom && oldvdom.type === vdom.type) {
     // Same type — update in place
     if (vdom.type === "text") {
@@ -82,6 +86,26 @@ function mountSimpleNode(vdom, container) {
   });
 
   container.appendChild(newDomElement);
+  return newDomElement;
+}
+
+// ── Create DOM from VDOM (full subtree) ─────────────────────────────
+
+function createDomElement(vdom) {
+  let newDomElement;
+  if (vdom.type === "text") {
+    newDomElement = document.createTextNode(vdom.props.textContent);
+  } else {
+    newDomElement = document.createElement(vdom.type);
+    updateDomElement(newDomElement, vdom);
+  }
+
+  newDomElement._virtualElement = vdom;
+
+  vdom.children.forEach((child) => {
+    newDomElement.appendChild(createDomElement(child));
+  });
+
   return newDomElement;
 }
 
